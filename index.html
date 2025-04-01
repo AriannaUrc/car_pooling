@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tris Online</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; display: flex; }
+        
+    </style>
+</head>
+<body>
+        
+    <script>
+const socket = new WebSocket('ws://localhost:8080');
+
+let playerSymbol = null;
+let currentTurn = 'X';
+let board = Array(9).fill(null);
+
+socket.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    
+    switch (data.type) {
+        case 'lobby_created':
+        case 'lobby_joined':
+            playerSymbol = data.symbol;
+            board = data.board || Array(9).fill(null);
+            currentTurn = data.turn || 'X';
+            updateBoard();
+            document.getElementById('status').innerText = `Sei il giocatore: ${playerSymbol}`;
+            break;
+        
+        case 'player_joined':
+            alert('Un altro giocatore si è unito! Il gioco può iniziare.');
+            break;
+
+        case 'move':
+            board[data.move.index] = data.move.symbol;
+            currentTurn = data.turn;
+            updateBoard();
+            break;
+
+        case 'show_lobby':
+            alert(stringify(data));
+        break;
+    }
+};
+
+function createLobby() {
+    const lobbyName = document.getElementById('lobbyName').value;
+    socket.send(JSON.stringify({ type: 'create_lobby', lobby: lobbyName }));
+}
+
+function joinLobby() {
+    const lobbyName = document.getElementById('lobbyName').value;
+    socket.send(JSON.stringify({ type: 'join_lobby', lobby: lobbyName }));
+}
+
+function showLobby() {
+    socket.send(JSON.stringify({ type: 'show_lobby'}));
+}
+
+function makeMove(index) {
+    if (board[index] === null && currentTurn === playerSymbol) {
+        console.log(playerSymbol + " is making a move!")
+        socket.send(JSON.stringify({ type: 'move', move: { index } }));
+    }
+}
+
+function updateBoard() {
+    for (let i = 0; i < 9; i++) {
+        document.getElementById(`cell-${i}`).innerText = board[i] || '';
+    }
+    document.getElementById('turn-indicator').innerText = `Turno di: ${currentTurn}`;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.cell').forEach((cell, index) => {
+        cell.addEventListener('click', () => makeMove(index));
+    });
+
+    });
+
+// HTML TEMPLATE
+
+
+</script>
+
+<form>
+    <label for="fname">First name:</label><br>
+    <input type="text" id="fname" name="fname"><br>
+    <label for="lname">Last name:</label><br>
+    <input type="text" id="lname" name="lname">
+</form> 
+
+</body>
+</html>
