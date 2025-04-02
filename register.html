@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+</head>
+<body>
+    <h1>Register</h1>
+
+    <form id="registerForm">
+        <input type="text" id="username" placeholder="Username" required><br>
+        <input type="password" id="password" placeholder="Password" required><br>
+        <input type="text" id="nome" placeholder="Nome" required><br>
+        <input type="text" id="cognome" placeholder="Cognome" required><br>
+        <input type="email" id="email" placeholder="Email" required><br>
+        <input type="text" id="telefono" placeholder="Telefono" required><br>
+        
+        <!-- Dynamic field for autista -->
+        <div id="numeroPatenteField" style="display:none;">
+            <input type="text" id="numero_patente" placeholder="Numero Patente" required><br>
+        </div>
+        
+        <select id="role">
+            <option value="utente">Utente</option>
+            <option value="autista">Autista</option>
+        </select><br>
+
+        <button type="submit">Register</button>
+    </form>
+
+    <p>Already have an account? <a href="login.html">Login here</a></p>
+
+    <script>
+        const ws = new WebSocket('ws://localhost:8080');
+
+        ws.onopen = () => {
+            console.log('WebSocket connected');
+        };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            alert(data.message);
+            if (data.status === 'success') {
+                window.location.href = 'login.html'; // Redirect to login page after registration
+            }
+        };
+
+        document.getElementById('role').addEventListener('change', (event) => {
+            const role = event.target.value;
+            const numeroPatenteField = document.getElementById('numeroPatenteField');
+
+            // Toggle the visibility of the 'numero_patente' field based on the selected role
+            if (role === 'autista') {
+                numeroPatenteField.style.display = 'block';
+            } else {
+                numeroPatenteField.style.display = 'none';
+            }
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', (event) => {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const nome = document.getElementById('nome').value;
+            const cognome = document.getElementById('cognome').value;
+            const email = document.getElementById('email').value;
+            const telefono = document.getElementById('telefono').value;
+            const role = document.getElementById('role').value;
+            const numero_patente = role === 'autista' ? document.getElementById('numero_patente').value : '';
+
+            ws.send(JSON.stringify({ action: 'register', username, password, nome, cognome, email, telefono, role, numero_patente }));
+        });
+    </script>
+</body>
+</html>

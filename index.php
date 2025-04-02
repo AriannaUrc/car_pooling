@@ -1,19 +1,18 @@
 <?php
+// Start the session
 session_start();
-include 'db_connection.php';
 
-// Handle pagination
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$limit = 6;
-$offset = ($page - 1) * $limit;
-
-if (isset($_POST["logout"])) {
-    session_destroy();
-    header("Location: login.php");
+// Check if the user is logged in
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php');  // If not logged in, redirect to login page
     exit;
 }
 
-if (!isset($_SESSION["role"])) {
-    header("Location: login.php");
-    exit;
+// Redirect based on user role
+if ($_SESSION['role'] === 'autista') {
+    header('Location: autista.php');
+} elseif ($_SESSION['role'] === 'utente') {
+    header('Location: user.php');
 }
+exit;
+?>
