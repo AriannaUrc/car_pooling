@@ -19,16 +19,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $data = json_decode($rawData, true);
     var_dump($data); // Add this line for debugging purposes
 
-    if ($data && isset($data['user']['id'], $data["user"]['username'], $data["user"]['role'])) {
+    if ($data && isset($data['user']['id'], $data['user']['username'])) {
         $_SESSION['user_id'] = $data['user']['id'];
         $_SESSION['username'] = $data["user"]['username'];
-        $_SESSION['role'] = $data["user"]['role'];
+        //$_SESSION['role'] = $data["user"]['role']; //TODO take role from the slider
 
         echo json_encode([
             'success' => true,
             'user_id' => $_SESSION['user_id'],
             'username' => $_SESSION['username'],
-            'role' => $_SESSION['role']
+            //'role' => $_SESSION['role']
         ]);
     } else {
         echo json_encode(['success' => false, 'message' => 'Invalid input data']);
@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <button type="submit">Login</button>
     </form>
 
-    <p>Don't have an account? <a href="register.php">Register here</a></p>
+    <p>Don't have an account? <a href="register.html">Register here</a></p>
 
     <script>
         const ws = new WebSocket('ws://localhost:8080');

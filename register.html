@@ -8,7 +8,7 @@
 <body>
     <h1>Register</h1>
 
-    <form id="registerForm">
+    <form id="registerForm" action="login.php">
         <input type="text" id="username" placeholder="Username" required><br>
         <input type="password" id="password" placeholder="Password" required><br>
         <input type="text" id="nome" placeholder="Nome" required><br>
@@ -18,18 +18,18 @@
         
         <!-- Dynamic field for autista -->
         <div id="numeroPatenteField" style="display:none;">
-            <input type="text" id="numero_patente" placeholder="Numero Patente" required><br>
+            <input type="text" id="numero_patente" placeholder="Numero Patente"><br>
         </div>
         
         <select id="role">
-            <option value="utente">Utente</option>
+            <option value="utente" selected="selected">Utente</option>
             <option value="autista">Autista</option>
         </select><br>
 
         <button type="submit">Register</button>
     </form>
 
-    <p>Already have an account? <a href="login.html">Login here</a></p>
+    <p>Already have an account? <a href="login.php">Login here</a></p>
 
     <script>
         const ws = new WebSocket('ws://localhost:8080');
@@ -42,8 +42,12 @@
             const data = JSON.parse(event.data);
             alert(data.message);
             if (data.status === 'success') {
-                window.location.href = 'login.html'; // Redirect to login page after registration
+                window.location.href = 'login.php'; // Redirect to login page after registration
             }
+        };
+
+        window.onload = function() {
+            document.getElementById('role').value = 'utente';
         };
 
         document.getElementById('role').addEventListener('change', (event) => {
@@ -53,6 +57,7 @@
             // Toggle the visibility of the 'numero_patente' field based on the selected role
             if (role === 'autista') {
                 numeroPatenteField.style.display = 'block';
+                numeroPatenteField.required = "true"
             } else {
                 numeroPatenteField.style.display = 'none';
             }

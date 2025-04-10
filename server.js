@@ -75,21 +75,30 @@ const handleLogin = (data, ws) => {
         return;
       }
   
-      const user = results[0];
+      const user_tmp = results[0];
+      console.log(user_tmp)
   
       // Check password hash
       try {
-        const passwordMatch = await bcrypt.compare(password, user.password);
+        const passwordMatch = await bcrypt.compare(password, user_tmp.password);
         
         if (passwordMatch) {
           // Successful login
+          console.log(JSON.stringify({
+            status: 'success',
+            message: 'Login successful',
+            user: {
+              id: user_tmp.id_utente,
+              username: user_tmp.nome_utente,
+            }
+          }));
+
           ws.send(JSON.stringify({
             status: 'success',
             message: 'Login successful',
             user: {
-              id: user.id,
-              username: user.nome_utente,
-              role: user.role, // Assuming role is stored in the user table
+              id: user_tmp.id_utente,
+              username: user_tmp.nome_utente,
             }
           }));
         } else {
