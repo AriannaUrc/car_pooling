@@ -10,9 +10,9 @@ if (!isset($_SESSION['user_id'])) {
 
 // Redirect based on user role
 if ($_SESSION['role'] === 'autista') {
-    header('Location: autista.php');
+    header('Location: autista_dashboard.php');
 } elseif ($_SESSION['role'] === 'utente') {
-    header('Location: user.php');
+    header('Location: user_dashboard.php');
 }
 exit;
 ?>

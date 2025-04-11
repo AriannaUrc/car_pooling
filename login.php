@@ -7,7 +7,7 @@ session_start();
 
 // Check if the user is already logged in, if so, redirect to the check.php
 if (isset($_SESSION['user_id'])) {
-    header('Location: check.php');
+    header('Location: index.php');
     exit;
 }
 
@@ -19,16 +19,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $data = json_decode($rawData, true);
     var_dump($data); // Add this line for debugging purposes
 
-    if ($data && isset($data['user']['id'], $data['user']['username'])) {
+    
+    if ($data && isset($data['user']['id'], $data['user']['username'], $data['user']['role'])) {
         $_SESSION['user_id'] = $data['user']['id'];
         $_SESSION['username'] = $data["user"]['username'];
-        //$_SESSION['role'] = $data["user"]['role']; //TODO take role from the slider
+        $_SESSION['role'] = $data["user"]['role'];
 
         echo json_encode([
             'success' => true,
             'user_id' => $_SESSION['user_id'],
             'username' => $_SESSION['username'],
-            //'role' => $_SESSION['role']
+            'role' => $_SESSION['role']
         ]);
     } else {
         echo json_encode(['success' => false, 'message' => 'Invalid input data']);
@@ -69,32 +70,46 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         };
 
         ws.onmessage = (event) => {
+            
             const data = JSON.parse(event.data);
+            console.log(data)
+
             alert(data.message);
             if (data.status === 'success') {
                 // Correctly access the user data from the nested 'user' object
                 const userData = data.user;
+                console.log(userData)
                 
                 // Send the user data to the PHP backend using the fetch API
+                // Send the user data to the PHP backend using the fetch API
                 fetch('login.php', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        user_id: userData.id,
-                        username: userData.username,
-                        role: userData.role
-                    }),
-                    headers: {
-                        'Content-Type': 'application/json',
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    user: {
+                    id: userData.id,
+                    username: userData.username,
+                    role: userData.role
                     }
+                })
                 })
                 .then(response => {
                     console.log("Response Text:", response); // Log raw response
-                    return response.json();
+                    /* console.log("this may be jucky");
+                    console.log(response.json()); */
+                    return response;
                 })
                 .then(data => {
                     console.log("Parsed JSON Data:", data);
-                    if (data.success) {
-                        window.location.href = 'check.php';  // Redirect to check.php
+                    if (data.status == "200") {
+                        
+                        if(userData.role == "autista")
+                        window.location.href = 'autista_dashboard.php';  // Redirect to dashboards.php
+                        else{
+                        window.location.href = 'user_dashboard.php';
+                        }
                     } else {
                         alert('Login failed: ' + data.message);
                     }

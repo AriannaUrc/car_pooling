@@ -90,6 +90,7 @@ const handleLogin = (data, ws) => {
             user: {
               id: user_tmp.id_utente,
               username: user_tmp.nome_utente,
+              role: role,
             }
           }));
 
@@ -99,6 +100,7 @@ const handleLogin = (data, ws) => {
             user: {
               id: user_tmp.id_utente,
               username: user_tmp.nome_utente,
+              role: role,
             }
           }));
         } else {
