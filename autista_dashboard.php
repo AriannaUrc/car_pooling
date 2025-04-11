@@ -50,7 +50,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $stmt->bind_param("issiiiiii", $id_autista, $data_partenza, $ora_partenza, $contributo_economico, $tempo_percorrenza, $posti_disponibili, $id_citta_partenza, $id_citta_destinazione, $id_tipo_viaggio);
 
     if ($stmt->execute()) {
-        echo "<p>Trip added successfully!</p>";
+        // Redirect to the same page to prevent resubmission on refresh
+        header("Location: autista_dashboard.php");
+        exit();
     } else {
         echo "<p>Error adding trip: " . $stmt->error . "</p>";
     }
@@ -138,9 +140,7 @@ $trips = $tripsResult->fetch_all(MYSQLI_ASSOC);
 
 <script>
     async function getApplications(tripId) {
-        const response = await fetch(`/getApplications?tripId=${tripId}`);
-        const data = await response.json();
-        alert(JSON.stringify(data, null, 2));
+        //TODO
     }
 </script>
 

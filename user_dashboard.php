@@ -31,22 +31,45 @@ $cities = $citiesResult->fetch_all(MYSQLI_ASSOC);
 // Handle trip search
 $trips = [];
 if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['search'])) {
-    $data_partenza = $_GET['data_partenza'];
-    $ora_partenza = $_GET['ora_partenza'];
     $id_citta_partenza = $_GET['id_citta_partenza'];
     $id_citta_destinazione = $_GET['id_citta_destinazione'];
+    $data_partenza = isset($_GET['data_partenza']) ? $_GET['data_partenza'] : null;
+    $ora_partenza = isset($_GET['ora_partenza']) ? $_GET['ora_partenza'] : null;
 
-    $searchQuery = "SELECT v.*, c1.nome_citta AS citta_partenza, c2.nome_citta AS citta_destinazione, tv.tipo_viaggio 
-                    FROM viaggi v 
-                    JOIN citta c1 ON v.id_citta_partenza = c1.id_citta 
-                    JOIN citta c2 ON v.id_citta_destinazione = c2.id_citta 
-                    LEFT JOIN tipo_viaggio tv ON v.id_tipo_viaggio = tv.id_tipo_viaggio 
-                    WHERE v.data_partenza = ? AND v.ora_partenza >= ? AND v.id_citta_partenza = ? AND v.id_citta_destinazione = ?";
-    $stmt = $conn->prepare($searchQuery);
-    $stmt->bind_param("siiii", $data_partenza, $ora_partenza, $id_citta_partenza, $id_citta_destinazione);
-    $stmt->execute();
-    $tripsResult = $stmt->get_result();
-    $trips = $tripsResult->fetch_all(MYSQLI_ASSOC);
+    // Validate mandatory fields
+    if (empty($id_citta_partenza) || empty($id_citta_destinazione)) {
+        echo "<p>Please select both starting and arrival cities.</p>";
+    } else {
+        $baseQuery = "SELECT v.*, c1.nome_citta AS citta_partenza, c2.nome_citta AS citta_destinazione, tv.tipo_viaggio 
+                      FROM viaggi v 
+                      JOIN citta c1 ON v.id_citta_partenza = c1.id_citta 
+                      JOIN citta c2 ON v.id_citta_destinazione = c2.id_citta 
+                      LEFT JOIN tipo_viaggio tv ON v.id_tipo_viaggio = tv.id_tipo_viaggio 
+                      WHERE v.id_citta_partenza = ? AND v.id_citta_destinazione = ?";
+
+        $params = [$id_citta_partenza, $id_citta_destinazione];
+        $types = "ii";
+
+        if ($data_partenza) {
+            $baseQuery .= " AND v.data_partenza >= ?";
+            $params[] = $data_partenza;
+            $types .= "s";
+
+            if ($ora_partenza) {
+                $baseQuery .= " AND v.ora_partenza >= ?";
+                $params[] = $ora_partenza;
+                $types .= "s";
+            }
+        }
+
+        $baseQuery .= " ORDER BY v.data_partenza, v.ora_partenza";
+
+        $stmt = $conn->prepare($baseQuery);
+        $stmt->bind_param($types, ...$params);
+        $stmt->execute();
+        $tripsResult = $stmt->get_result();
+        $trips = $tripsResult->fetch_all(MYSQLI_ASSOC);
+    }
 }
 
 ?>
@@ -54,17 +77,19 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['search'])) {
 <h2>Search for Trips</h2>
 <form method="get" action="">
     <label for="data_partenza">Date of Departure:</label>
-    <input type="date" id="data_partenza" name="data_partenza" required><br>
+    <input type="date" id="data_partenza" name="data_partenza"><br>
     <label for="ora_partenza">Time of Departure:</label>
-    <input type="time" id="ora_partenza" name="ora_partenza" required><br>
+    <input type="time" id="ora_partenza" name="ora_partenza"><br>
     <label for="id_citta_partenza">City of Departure:</label>
     <select id="id_citta_partenza" name="id_citta_partenza" required>
+        <option value="">Select a city</option>
         <?php foreach ($cities as $city): ?>
             <option value="<?php echo $city['id_citta']; ?>"><?php echo $city['nome_citta']; ?></option>
         <?php endforeach; ?>
     </select><br>
     <label for="id_citta_destinazione">City of Destination:</label>
     <select id="id_citta_destinazione" name="id_citta_destinazione" required>
+        <option value="">Select a city</option>
         <?php foreach ($cities as $city): ?>
             <option value="<?php echo $city['id_citta']; ?>"><?php echo $city['nome_citta']; ?></option>
         <?php endforeach; ?>
@@ -105,9 +130,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['search'])) {
 
 <script>
     async function applyToTrip(tripId) {
-        const response = await fetch(`/applyToTrip?tripId=${tripId}&userId=<?php echo $_SESSION['user_id']; ?>`);
-        const data = await response.json();
-        alert(data.message);
+        //TODO
     }
 </script>
 
