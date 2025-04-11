@@ -77,7 +77,8 @@ const handleLogin = (data, ws) => {
   
       const user_tmp = results[0];
       console.log(user_tmp)
-  
+      const userId = role === 'autista' ? user_tmp.id_autista : user_tmp.id_utente;
+
       // Check password hash
       try {
         const passwordMatch = await bcrypt.compare(password, user_tmp.password);
@@ -88,7 +89,7 @@ const handleLogin = (data, ws) => {
             status: 'success',
             message: 'Login successful',
             user: {
-              id: user_tmp.id_utente,
+              id: userId,
               username: user_tmp.nome_utente,
               role: role,
             }
@@ -98,7 +99,7 @@ const handleLogin = (data, ws) => {
             status: 'success',
             message: 'Login successful',
             user: {
-              id: user_tmp.id_utente,
+              id: userId,
               username: user_tmp.nome_utente,
               role: role,
             }

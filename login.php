@@ -1,11 +1,9 @@
 <?php
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
 
 // Start the session
 session_start();
 
-// Check if the user is already logged in, if so, redirect to the check.php
+// Check if the user is already logged in, if so, redirect to the index.php
 if (isset($_SESSION['user_id'])) {
     header('Location: index.php');
     exit;
@@ -81,7 +79,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 console.log(userData)
                 
                 // Send the user data to the PHP backend using the fetch API
-                // Send the user data to the PHP backend using the fetch API
                 fetch('login.php', {
                 method: 'POST',
                 headers: {
@@ -104,6 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 .then(data => {
                     console.log("Parsed JSON Data:", data);
                     if (data.status == "200") {
+                        console.log(userData.role)
                         
                         if(userData.role == "autista")
                         window.location.href = 'autista_dashboard.php';  // Redirect to dashboards.php
