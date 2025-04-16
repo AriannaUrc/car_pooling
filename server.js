@@ -183,6 +183,24 @@ const handleGetApplications = (data, ws) => {
   });
 
 }
-//app.listen(port, () => {
-//console.log('Espress server running on http://localhost:'+port);
-//});
+
+const handleApplyToTrip = (data, ws) => {
+  const { tripId, userId } = data;
+  console.log("make application for " + tripId + " from " + userId)
+
+  query = 'INSERT INTO applicazioni (id_utente, id_viaggio, n_passeggeri) VALUES ('+ userId +', '+ tripId +', 1)';
+
+  // Execute query to check user existence
+  db.execute(query, async (err, results) => {
+    if (err) {
+      console.error('Database connection error:', err);
+      ws.send(JSON.stringify({ status: 'failure', message: 'Error connecting to database' }));
+      return;
+    }
+
+    console.log(results);
+    // Send back the results
+    ws.send(JSON.stringify({ results }));
+  }); 
+
+}

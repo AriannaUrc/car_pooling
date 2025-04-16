@@ -129,8 +129,25 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['search'])) {
 </table>
 
 <script>
+
+    const ws = new WebSocket('ws://localhost:10000');
+
+    ws.onopen = () => {
+        console.log('WebSocket connected');
+    };
+
+    ws.onmessage = (event) => {
+        
+        const data = JSON.parse(event.data);
+        console.log(data)
+    };
+
     async function applyToTrip(tripId) {
-        //TODO
+        //send to the server a request to get all applications for a specific trip
+        userId = "<?php echo $_SESSION['user_id']; ?>";
+
+        console.info(JSON.stringify({ action: 'applyToTrip', tripId, userId}));
+        ws.send(JSON.stringify({ action: 'applyToTrip', tripId, userId}));
     }
 </script>
 
