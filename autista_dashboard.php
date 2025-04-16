@@ -139,8 +139,23 @@ $trips = $tripsResult->fetch_all(MYSQLI_ASSOC);
 </table>
 
 <script>
+
+    const ws = new WebSocket('ws://localhost:10000');
+
+    ws.onopen = () => {
+        console.log('WebSocket connected');
+    };
+
+    ws.onmessage = (event) => {
+        
+        const data = JSON.parse(event.data);
+        console.log(data)
+    };
+
     async function getApplications(tripId) {
-        //TODO
+        //send to the server a request to get all applications for a specific trip
+        console.info(JSON.stringify({ action: 'getApplications', tripId }));
+        ws.send(JSON.stringify({ action: 'getApplications', tripId }));
     }
 </script>
 

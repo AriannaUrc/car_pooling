@@ -40,6 +40,8 @@ ws.on('message', async (message) => {
     handleRegister(data, ws);
   } else if (data.action === 'getApplications') {
     // Handle get applications
+    const { tripId } = data;
+    console.log(req.connection.remoteAddress + ": applicants for " + tripId)
     handleGetApplications(data, ws);
   } else if (data.action === 'applyToTrip') {
     // Handle apply to trip
@@ -162,7 +164,25 @@ bcrypt.hash(password, 10, (err, hashedPassword) => {
 };
 
 
+const handleGetApplications = (data, ws) => {
+  const { tripId } = data;
+  console.log("applicants for " + tripId)
 
+  query = 'SELECT * FROM applicazioni WHERE id_viaggio = '+ tripId;
+  // Execute query to check user existence
+  db.execute(query, async (err, results) => {
+    if (err) {
+      console.error('Database connection error:', err);
+      ws.send(JSON.stringify({ status: 'failure', message: 'Error connecting to database' }));
+      return;
+    }
+
+    console.log(results);
+    // Send back the results
+    ws.send(JSON.stringify({ results }));
+  });
+
+}
 //app.listen(port, () => {
 //console.log('Espress server running on http://localhost:'+port);
 //});
