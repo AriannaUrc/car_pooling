@@ -1,14 +1,14 @@
 const WebSocket = require('ws');
 const mysql = require('mysql2');
 const bcrypt = require('bcryptjs');
-const express = require('express');
+//const express = require('express');
 const bodyParser = require('body-parser');
 
-const app = express();
-app.use(bodyParser.json());
-
+//const app = express();
+//app.use(bodyParser.json());
+const port=10000
 // WebSocket server setup
-const ws = new WebSocket.Server({ port: 8080 });
+const wss = new WebSocket.Server({ port: port });
 
 // MySQL database connection setup
 const db = mysql.createConnection({
@@ -24,9 +24,12 @@ db.connect((err) => {
 });
 
 // Handle WebSocket connections
-ws.on('connection', (ws) =>  console.log('Client connected'));
+
+wss.on('connection', (ws,req) => {
+  console.log("connesso "+ req.connection.remoteAddress)
 
 ws.on('message', async (message) => {
+  console.log("messaggio_arrivato");
   const data = JSON.parse(message);
   
   if (data.action === 'login') {
@@ -48,7 +51,7 @@ ws.on('message', async (message) => {
 ws.on('close', () => {
   console.log('Client disconnected');
 });
-
+});
 
 const handleLogin = (data, ws) => {
 const { username, password, role } = data;
@@ -160,6 +163,6 @@ bcrypt.hash(password, 10, (err, hashedPassword) => {
 
 
 
-app.listen(3000, () => {
-console.log('Express server running on http://localhost:3000');
-});
+//app.listen(port, () => {
+//console.log('Espress server running on http://localhost:'+port);
+//});

@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <p>Don't have an account? <a href="register.html">Register here</a></p>
 
     <script>
-        const ws = new WebSocket('ws://localhost:8080');
+        const ws = new WebSocket('ws://localhost:10000');
 
         ws.onopen = () => {
             console.log('WebSocket connected');
@@ -124,7 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             const role = document.getElementById('role').value;
-
+            console.info(JSON.stringify({ action: 'login', username, password, role }));
             ws.send(JSON.stringify({ action: 'login', username, password, role }));
         });
     </script>
