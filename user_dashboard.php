@@ -3,6 +3,13 @@
 session_start();
 var_dump($_SESSION);
 
+if (isset($_POST['logout'])) {
+    //var_dump("logged out");
+    session_destroy();
+    header("Location: index.php");
+    exit;
+}
+
 // Check if the user is logged in and has the correct role
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'utente') {
     header('Location: index.php');
@@ -73,6 +80,13 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['search'])) {
 }
 
 ?>
+
+
+<form action="" method="post">
+    <input type="submit" name="logout" value="Logout">
+</form>
+
+
 
 <h2>Search for Trips</h2>
 <form method="get" action="">
