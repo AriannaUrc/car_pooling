@@ -76,6 +76,11 @@ wss.on('connection', (ws, req) => {
         const tripResult = await createTrip(tripData);
         ws.send(JSON.stringify({ type: 'tripCreated', ...tripResult }));
         break;
+
+      case 'getUserDetails':
+          console.log("got asked for user details")
+          handleGetUserDetails(data, ws);
+        break;
     }
   });
 
@@ -197,7 +202,12 @@ const handleGetApplications = (data, ws) => {
   const { tripId } = data;
   console.log("applicants for " + tripId);
 
-  const query = 'SELECT * FROM applicazioni WHERE id_viaggio = ?';
+  const query = `
+    SELECT a.id, a.id_utente, a.n_passeggeri, u.nome, u.cognome, u.email
+    FROM applicazioni a
+    JOIN utenti u ON a.id_utente = u.id_utente
+    WHERE a.id_viaggio =?
+  `;
 
   // Execute query to check user existence
   db.execute(query, [tripId], (err, results) => {
@@ -209,7 +219,7 @@ const handleGetApplications = (data, ws) => {
 
     console.log(results);
     // Send back the results
-    ws.send(JSON.stringify({ results }));
+    ws.send(JSON.stringify({ type: 'applications', results }));
   });
 };
 
@@ -302,3 +312,24 @@ async function searchTrips(data, limit, offset) {
 
   return await queryDatabase(baseQuery, params);
 }
+
+
+const handleGetUserDetails = (data, ws) => {
+  const { userId } = data;
+  console.log("Getting user details for " + userId);
+
+  const query = 'SELECT * FROM utenti WHERE id_utente =?';
+
+  // Execute query to check user existence
+  db.execute(query, [userId], (err, results) => {
+    if (err) {
+      console.error('Database connection error:', err);
+      ws.send(JSON.stringify({ status: 'failure', message: 'Error connecting to database' }));
+      return;
+    }
+
+    console.log(results);
+    // Send back the results
+    ws.send(JSON.stringify({ type: 'userDetails', user: results[0] }));
+  });
+};

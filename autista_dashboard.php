@@ -102,13 +102,17 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Autista.</h1
             populateTripTypes(data.tripTypes);
         } else if (data.type === 'trips') {
             displayTrips(data.trips);
+        } else if (data.type === 'applications') {
+            displayApplications(data.results);
         } else if (data.type === 'tripCreated') {
-            if (data.status === 'success') {
-                alert('Trip added successfully');
-                window.location.reload();
+            if (data.status ==='success') {
+            alert('Trip added successfully');
+            window.location.reload();
             } else {
-                alert('Error adding trip: ' + data.message);
+            alert('Error adding trip:'+ data.message);
             }
+        } else if (data.type === 'userDetails') {
+            displayUserDetails(data.user);
         }
     };
 
@@ -147,7 +151,7 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Autista.</h1
         if(trips.length <= 0 && offset > 0){
             const row = document.createElement('tr');
             row.innerHTML = `
-                No more trips to show...
+            No more trips to show...
             `;
             newTbody.appendChild(row);
 
@@ -159,23 +163,90 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Autista.</h1
             trips.forEach(trip => {
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td>${trip.data_partenza}</td>
-                <td>${trip.ora_partenza}</td>
-                <td>${trip.contributo_economico}</td>
-                <td>${trip.tempo_percorrenza}</td>
-                <td>${trip.posti_disponibili}</td>
-                <td>${trip.citta_partenza}</td>
-                <td>${trip.citta_destinazione}</td>
-                <td>${trip.tipo_viaggio}</td>
-                <td><button onclick="getApplications(${trip.id_viaggio})">View Applications</button></td>
+            <td>${trip.data_partenza}</td>
+            <td>${trip.ora_partenza}</td>
+            <td>${trip.contributo_economico}</td>
+            <td>${trip.tempo_percorrenza}</td>
+            <td>${trip.posti_disponibili}</td>
+            <td>${trip.citta_partenza}</td>
+            <td>${trip.citta_destinazione}</td>
+            <td>${trip.tipo_viaggio}</td>
+            <td><button onclick="getApplications(${trip.id_viaggio})">View Applications</button></td>
             `;
             newTbody.appendChild(row);
         });
 
         tripsTable.appendChild(newTbody);
         }
+    };
+
+var applicationsTable = [];
+    function displayApplications(applications) {
+        applicationsTable = document.getElementById('applicationsTable');
+        if (applicationsTable) {
+            applicationsTable.remove()
+        }
+        if(applications.length > 0){
+            const table = document.createElement('table');
+        applicationsTable = document.getElementById('applicationsTable');
+        table.id = 'applicationsTable';
+        table.innerHTML = `
+        <th>Name</th>
+        <th>Email</th>
+        <th>Number of Passengers</th>
+        <th>View Details</th>
+        `;
+        document.body.appendChild(table);
         
+        applicationsTable = document.getElementById('applicationsTable');
+        const newTbody = document.createElement('tbody');
+        applications.forEach(application => {
+            const row = document.createElement('tr');
+            row.innerHTML += `
+            <td>${application.nome} ${application.cognome}</td>
+            <td>${application.email}</td>
+            <td>${application.n_passeggeri}</td>
+            <td><button onclick="getUserDetails(${application.id_utente})">View Details</button></td>
+            `;
+            newTbody.appendChild(row);
+        });
+        applicationsTable.appendChild(newTbody);
+        }
         
+    }
+
+    async function getUserDetails(userId) {
+        ws.send(JSON.stringify({ action: 'getUserDetails', userId }));
+    }
+
+    function displayUserDetails(user) {
+        const userDetailsModal = document.getElementById('userDetailsModal');
+        if (!userDetailsModal) {
+            const modal = document.createElement('div');
+            modal.id = 'userDetailsModal';
+            modal.innerHTML = `
+            <h2>User Details</h2>
+            <p>Name: ${user.nome} ${user.cognome}</p>
+            <p>Email: ${user.email}</p>
+            <p>Phone: ${user.telefono}</p>
+            <button onclick="closeUserDetailsModal()">Close</button>
+            `;
+            document.body.appendChild(modal);
+        } else {
+            userDetailsModal.innerHTML = `
+            <h2>User Details</h2>
+            <p>Name: ${user.nome} ${user.cognome}</p>
+            <p>Email: ${user.email}</p>
+            <p>Phone: ${user.telefono}</p>
+            <button onclick="closeUserDetailsModal()">Close</button>
+            `;
+        }
+        userDetailsModal.style.display = 'block';
+    }
+
+    function closeUserDetailsModal() {
+        const userDetailsModal = document.getElementById('userDetailsModal');
+        userDetailsModal.remove()
     }
 
     async function getApplications(tripId) {
