@@ -44,6 +44,18 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Utente.</h1>
 <tr>Search for your trip!</tr>
 </div>
 
+
+
+
+<!-- Search form -->
+<form id="search-form">
+  <input type="number" id="search-id" placeholder="Enter autista ID">
+  <button type="submitSearch">Search</button>
+</form>
+
+<!-- Search results container -->
+<div id="search-results"></div>
+
 <script>
 
     const limit = 3;
@@ -64,6 +76,9 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Utente.</h1>
         } else if (data.type === 'trips') {
             displayTrips(data.trips);
         }
+        else if (data.type === 'autistaRVDetails') {
+            displaySearchResults(data);
+        }
     };
 
     function populateCities(cities) {
@@ -83,9 +98,10 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Utente.</h1>
     function displayTrips(trips) {
     const tripsDiv = document.getElementById('trips');
     if (trips.length > 0) {
-        let html = '<table border="1"><tr><th>Date of Departure</th><th>Time of Departure</th><th>Economic Contribution</th><th>Travel Duration (minutes)</th><th>Available Seats</th><th>City of Departure</th><th>City of Destination</th><th>Trip Type</th><th>Apply</th></tr>';
+        let html = '<table border="1"><tr><th>Driver ID</hr><th>Date of Departure</th><th>Time of Departure</th><th>Economic Contribution</th><th>Travel Duration (minutes)</th><th>Available Seats</th><th>City of Departure</th><th>City of Destination</th><th>Apply</th></tr>';
         trips.forEach(trip => {
             html += `<tr>
+                <td>${trip.id_autista}</td>
                 <td>${trip.data_partenza}</td>
                 <td>${trip.ora_partenza}</td>
                 <td>${trip.contributo_economico}</td>
@@ -93,7 +109,6 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Utente.</h1>
                 <td>${trip.posti_disponibili}</td>
                 <td>${trip.citta_partenza}</td>
                 <td>${trip.citta_destinazione}</td>
-                <td>${trip.tipo_viaggio}</td>
                 <td><button onclick="applyToTrip(${trip.id_viaggio})">Apply</button></td>
             </tr>`;
         });
@@ -124,9 +139,8 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Utente.</h1>
         tripsDiv.innerHTML = '<p>No trips available.</p>';
     }
     else{
-        let html = '<table border="1"><tr><th>Date of Departure</th><th>Time of Departure</th><th>Economic Contribution</th><th>Travel Duration (minutes)</th><th>Available Seats</th><th>City of Departure</th><th>City of Destination</th><th>Trip Type</th><th>Apply</th></tr>';
-        html += '<tr>No more trips to show...</tr>'
-        html += `</table> <button id="prev" >Previous</button> 
+        let html = '<table border="1"><tr><th>Driver ID</hr><th>Date of Departure</th><th>Time of Departure</th><th>Economic Contribution</th><th>Travel Duration (minutes)</th><th>Available Seats</th><th>City of Destination</th><th>Apply</th></tr>';
+        html += `</table> No more trips to show... <br><button id="prev" >Previous</button> 
         <button id="next" disabled>Next</button>`;
 
         tripsDiv.innerHTML = html;
@@ -173,4 +187,150 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Utente.</h1>
         console.log("limit" + limit);
         ws.send(JSON.stringify({ action: 'searchTrips', data, limitN: limit, offsetN: offset }));
     };
+
+
+
+    //handles the search functions
+    async function getAutistaInfo(autistaId) {
+        ws.send(JSON.stringify({ action: 'getAutistaInfo', autistaId }));
+    }
+
+
+    // Get the search form and results container
+const searchForm = document.getElementById('search-form');
+const searchResults = document.getElementById('search-results');
+
+// Add an event listener to the search form
+searchForm.addEventListener('submit', (event) => {
+  // Prevent the default form submission behavior
+  event.preventDefault();
+
+  // Get the search ID and type
+  const searchId = document.getElementById('search-id').value;
+  console.log("searching for autista")
+  // Check if the search ID is valid
+  if (searchId && searchId > 0) {
+    // Send a message to the WebSocket server to search for the autista
+    getAutistaInfo(searchId);
+  } else {
+    // Display an error message
+    searchResults.innerHTML = 'Invalid search ID';
+  }
+});
+
+
+// Function to display search results
+function displaySearchResults(data) {
+  // Clear the search results container
+  searchResults.innerHTML = '';
+
+  // Display the search results
+  if (data.status ==='success') {
+    const userType = 'Autista';
+    const userInfo = data.user || data.autista;
+    const reviews = data.reviews;
+    const averageRating = data.averageRating;
+
+    // Create a container for the autista info
+    const userInfoContainer = document.createElement('div');
+    userInfoContainer.innerHTML = `
+      <h2>${userType} Info</h2>
+      <p>ID: ${userInfo.id_autista}</p> 
+      <p>Name: ${userInfo.nome} ${userInfo.cognome}</p>
+      <p>Email: ${userInfo.email}</p>
+    `;
+
+    // Create a container for the reviews
+    const reviewsContainer = document.createElement('div');
+
+    // Paginate the reviews
+    const reviewLimit = 3;
+    let reviewOffset = 0;
+    let reviewPages = Math.ceil(reviews.length / reviewLimit);
+
+    let reviewHtml = `
+      <h2>Reviews</h2>
+      <ul>
+    `;
+
+    for (let i = reviewOffset; i < reviewOffset + reviewLimit && i < reviews.length; i++) {
+      reviewHtml += `
+        <li>
+          <p>Rating: ${reviews[i].voto}/5</p>
+          <p>Review: ${reviews[i].giudizio}</p>
+          <p>Date: ${reviews[i].data_feedback}</p>
+        </li>
+      `;
+    }
+
+    reviewHtml += `
+      </ul>
+    `;
+
+    reviewsContainer.innerHTML = reviewHtml;
+
+    // Create a container for the average rating
+    const averageRatingContainer = document.createElement('div');
+    averageRatingContainer.innerHTML = `
+      <h2>Average Rating</h2>
+      <p>${averageRating}/5</p>
+    `;
+
+    // Create a container for the review form
+    const reviewFormContainer = document.createElement('div');
+    reviewFormContainer.innerHTML = `
+      <h2>Write a Review</h2>
+      <form id="review-form">
+        <label for="rating">Rating:</label>
+        <input type="number" id="rating" name="rating" min="1" max="5" required>
+        <br>
+        <label for="review">Review:</label>
+        <textarea id="review" name="review" required></textarea>
+        <br>
+        <input type="submit" value="Post Review">
+      </form>
+    `;
+
+    // Add the containers to the search results container
+    searchResults.appendChild(userInfoContainer);
+    searchResults.appendChild(reviewFormContainer);
+    searchResults.appendChild(averageRatingContainer);
+    searchResults.appendChild(reviewsContainer);
+
+    // Add pagination buttons
+    const paginationContainer = document.createElement('div');
+    paginationContainer.innerHTML = `
+      <button id="prev-review" ${reviewOffset === 0? 'disabled' : ''}>Previous</button>
+      <button id="next-review" ${reviewOffset + reviewLimit >= reviews.length? 'disabled' : ''}>Next</button>
+    `;
+
+    searchResults.appendChild(paginationContainer);
+
+    // Add event listeners to pagination buttons
+    document.getElementById('prev-review').addEventListener('click', () => {
+      reviewOffset -= reviewLimit;
+      displaySearchResults(data);
+    });
+
+    document.getElementById('next-review').addEventListener('click', () => {
+      reviewOffset += reviewLimit;
+      displaySearchResults(data);
+    });
+
+    // Add event listener to review form
+    const reviewForm = document.getElementById('review-form');
+    reviewForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const rating = document.getElementById('rating').value;
+      const review = document.getElementById('review').value;
+      const userIdP = "<?php echo $_SESSION['user_id'];?>";
+      const autistaIdP = userInfo.id_autista;
+      ws.send(JSON.stringify({ action: 'postReview', userIdP, autistaIdP, rating, review, forwho: "autisti" }));
+    });
+  } else {
+    searchResults.innerHTML = 'No results found';
+  }
+
+
+}
 </script>

@@ -42,10 +42,6 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Autista.</h1
     <select id="id_citta_destinazione" name="id_citta_destinazione" required>
         <option value="">Select a city</option>
     </select><br>
-    <label for="id_tipo_viaggio">Trip Type:</label>
-    <select id="id_tipo_viaggio" name="id_tipo_viaggio" required>
-        <option value="">Select a trip type</option>
-    </select><br>
     <input type="submit" value="Add Trip">
 </form>
 
@@ -54,6 +50,17 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Autista.</h1
 
 <button id="prev" disabled>Previous</button>
 <button id="next">Next</button>
+
+
+
+<!-- Search form -->
+<form id="search-form">
+  <input type="number" id="search-id" placeholder="Enter user ID">
+  <button type="submitSearch">Search</button>
+</form>
+
+<!-- Search results container -->
+<div id="search-results"></div>
 
 <script>
 
@@ -113,6 +120,8 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Autista.</h1
             }
         } else if (data.type === 'userDetails') {
             displayUserDetails(data.user);
+        } else if (data.type === 'userRVDetails') {
+            displaySearchResults(data);
         }
     };
 
@@ -128,15 +137,6 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Autista.</h1
         });
     }
 
-    function populateTripTypes(tripTypes) {
-        const tripTypeSelect = document.getElementById('id_tipo_viaggio');
-        tripTypes.forEach(tripType => {
-            const option = document.createElement('option');
-            option.value = tripType.id_tipo_viaggio;
-            option.textContent = tripType.tipo_viaggio;
-            tripTypeSelect.appendChild(option);
-        });
-    }
 
     function displayTrips(trips) {
         const tripsTable = document.getElementById('tripsTable');
@@ -146,7 +146,7 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Autista.</h1
         }
         const newTbody = document.createElement('tbody');
         const firstrow = document.createElement('tr');
-        firstrow.innerHTML = '<th>Date of Departure</th><th>Time of Departure</th><th>Economic Contribution</th><th>Travel Duration (minutes)</th><th>Available Seats</th><th>City of Departure</th><th>City of Destination</th><th>Trip Type</th><th>Registrations</th>';
+        firstrow.innerHTML = '<th>Date of Departure</th><th>Time of Departure</th><th>Economic Contribution</th><th>Travel Duration (minutes)</th><th>Available Seats</th><th>City of Departure</th><th>City of Destination</th><th>Registrations</th>';
         newTbody.appendChild(firstrow);
         if(trips.length <= 0 && offset > 0){
             const row = document.createElement('tr');
@@ -170,7 +170,6 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Autista.</h1
             <td>${trip.posti_disponibili}</td>
             <td>${trip.citta_partenza}</td>
             <td>${trip.citta_destinazione}</td>
-            <td>${trip.tipo_viaggio}</td>
             <td><button onclick="getApplications(${trip.id_viaggio})">View Applications</button></td>
             `;
             newTbody.appendChild(row);
@@ -180,7 +179,8 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Autista.</h1
         }
     };
 
-var applicationsTable = [];
+    var applicationsTable = [];
+    
     function displayApplications(applications) {
         applicationsTable = document.getElementById('applicationsTable');
         if (applicationsTable) {
@@ -226,6 +226,7 @@ var applicationsTable = [];
             modal.id = 'userDetailsModal';
             modal.innerHTML = `
             <h2>User Details</h2>
+            <p>ID: ${user.id_utente}</p>
             <p>Name: ${user.nome} ${user.cognome}</p>
             <p>Email: ${user.email}</p>
             <p>Phone: ${user.telefono}</p>
@@ -235,13 +236,13 @@ var applicationsTable = [];
         } else {
             userDetailsModal.innerHTML = `
             <h2>User Details</h2>
+            <p>ID: ${user.id_utente}</p>
             <p>Name: ${user.nome} ${user.cognome}</p>
             <p>Email: ${user.email}</p>
             <p>Phone: ${user.telefono}</p>
             <button onclick="closeUserDetailsModal()">Close</button>
             `;
         }
-        userDetailsModal.style.display = 'block';
     }
 
     function closeUserDetailsModal() {
@@ -263,4 +264,154 @@ var applicationsTable = [];
         console.info(JSON.stringify({ action: 'createTrip', data }));
         ws.send(JSON.stringify({ action: 'createTrip', data }));
     };
+
+
+
+
+
+
+
+
+//handles the search functions
+async function getUserInfo(searchId) {
+        ws.send(JSON.stringify({ action: 'getUserInfo', searchId }));
+    }
+
+
+const searchForm = document.getElementById('search-form');
+const searchResults = document.getElementById('search-results');
+
+// Add an event listener to the search form
+searchForm.addEventListener('submit', (event) => {
+  // Prevent the default form submission behavior
+  event.preventDefault();
+
+  // Get the search ID and type
+  const searchId = document.getElementById('search-id').value;
+  console.log("searching for user: " + searchId)
+  // Check if the search ID is valid
+  if (searchId && searchId > 0) {
+    // Send a message to the WebSocket server to search for the autista
+    getUserInfo(searchId);
+  } else {
+    // Display an error message
+    searchResults.innerHTML = 'Invalid search ID';
+  }
+});
+
+
+// Function to display search results
+function displaySearchResults(data) {
+  // Clear the search results container
+  searchResults.innerHTML = '';
+
+  // Display the search results
+  if (data.status ==='success') {
+    const userType = 'User';
+    const userInfo = data.user;
+    const reviews = data.reviews;
+    const averageRating = data.averageRating;
+
+    // Create a container for the autista info
+    const userInfoContainer = document.createElement('div');
+    userInfoContainer.innerHTML = `
+      <h2>${userType} Info</h2>
+      <p>ID: ${userInfo.id_utente}</p> 
+      <p>Name: ${userInfo.nome} ${userInfo.cognome}</p>
+      <p>Email: ${userInfo.email}</p>
+    `;
+
+    // Create a container for the reviews
+    const reviewsContainer = document.createElement('div');
+
+    // Paginate the reviews
+    const reviewLimit = 3;
+    let reviewOffset = 0;
+    let reviewPages = Math.ceil(reviews.length / reviewLimit);
+
+    let reviewHtml = `
+      <h2>Reviews</h2>
+      <ul>
+    `;
+
+    for (let i = reviewOffset; i < reviewOffset + reviewLimit && i < reviews.length; i++) {
+      reviewHtml += `
+        <li>
+          <p>Rating: ${reviews[i].voto}/5</p>
+          <p>Review: ${reviews[i].giudizio}</p>
+          <p>Date: ${reviews[i].data_feedback}</p>
+        </li>
+      `;
+    }
+
+    reviewHtml += `
+      </ul>
+    `;
+
+    reviewsContainer.innerHTML = reviewHtml;
+
+    // Create a container for the average rating
+    const averageRatingContainer = document.createElement('div');
+    averageRatingContainer.innerHTML = `
+      <h2>Average Rating</h2>
+      <p>${averageRating}/5</p>
+    `;
+
+    // Create a container for the review form
+    const reviewFormContainer = document.createElement('div');
+    reviewFormContainer.innerHTML = `
+      <h2>Write a Review</h2>
+      <form id="review-form">
+        <label for="rating">Rating:</label>
+        <input type="number" id="rating" name="rating" min="1" max="5" required>
+        <br>
+        <label for="review">Review:</label>
+        <textarea id="review" name="review" required></textarea>
+        <br>
+        <input type="submit" value="Post Review">
+      </form>
+    `;
+
+    // Add the containers to the search results container
+    searchResults.appendChild(userInfoContainer);
+    searchResults.appendChild(reviewFormContainer);
+    searchResults.appendChild(averageRatingContainer);
+    searchResults.appendChild(reviewsContainer);
+
+    // Add pagination buttons
+    const paginationContainer = document.createElement('div');
+    paginationContainer.innerHTML = `
+      <button id="prev-review" ${reviewOffset === 0? 'disabled' : ''}>Previous</button>
+      <button id="next-review" ${reviewOffset + reviewLimit >= reviews.length? 'disabled' : ''}>Next</button>
+    `;
+
+    searchResults.appendChild(paginationContainer);
+
+    // Add event listeners to pagination buttons
+    document.getElementById('prev-review').addEventListener('click', () => {
+      reviewOffset -= reviewLimit;
+      displaySearchResults(data);
+    });
+
+    document.getElementById('next-review').addEventListener('click', () => {
+      reviewOffset += reviewLimit;
+      displaySearchResults(data);
+    });
+
+    // Add event listener to review form
+    const reviewForm = document.getElementById('review-form');
+    reviewForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const rating = document.getElementById('rating').value;
+      const review = document.getElementById('review').value;
+      const userIdP = userInfo.id_utente;
+      const autistaIdP = "<?php echo $_SESSION['user_id'];?>";
+      ws.send(JSON.stringify({ action: 'postReview', userIdP, autistaIdP, rating, review, forwho: "user" }));
+    });
+  } else {
+    searchResults.innerHTML = 'No results found';
+  }
+
+
+}
 </script>

@@ -55,10 +55,6 @@ wss.on('connection', (ws, req) => {
         ws.send(JSON.stringify({ type: 'cities', cities }));
         break;
 
-      case 'getTripTypes':
-        const tripTypes = await queryDatabase('SELECT id_tipo_viaggio, tipo_viaggio FROM tipo_viaggio');
-        ws.send(JSON.stringify({ type: 'tripTypes', tripTypes }));
-        break;
 
       case 'searchTrips':
         const trips = await searchTrips(data.data, data.limitN, data.offsetN);
@@ -80,6 +76,37 @@ wss.on('connection', (ws, req) => {
       case 'getUserDetails':
           console.log("got asked for user details")
           handleGetUserDetails(data, ws);
+        break;
+
+      case 'getAutistaInfo':
+        const { autistaId } = data;
+        console.log("searching for autista")
+        getAutistaReviewDetails(autistaId, ws)
+        break;
+
+      case 'getUserInfo':
+        const { searchId } = data;
+        console.log("searching for user: " + searchId)
+        getUserReviewDetails(searchId, ws);
+      break;
+
+      case 'postReview':
+        const { userIdP, autistaIdP, rating, review, forwho } = data;
+        var query = "";
+        if(forwho == "user")
+        query = 'INSERT INTO feedback_utenti_autisti (id_autista, id_utente, voto, giudizio) VALUES (?,?,?,?)';
+        else
+        query = 'INSERT INTO feedback_autisti_utenti (id_autista, id_utente, voto, giudizio) VALUES (?,?,?,?)';
+
+        console.log(autistaIdP + " " + userIdP+ " " + rating + " " + review)
+        db.execute(query, [autistaIdP, userIdP, rating, review], (err, results) => {
+          if (err) {
+            console.error('Database connection error:', err);
+            ws.send(JSON.stringify({ status: 'failure', message: 'Error connecting to database' }));
+            return;
+          }
+          ws.send(JSON.stringify({ status:'success', message: 'Review posted successfully' }));
+        });
         break;
     }
   });
@@ -243,14 +270,13 @@ const handleApplyToTrip = (data, ws) => {
   });
 };
 
-const getUserTrips = (userId, offset, limit) => {
+const getUserTrips = (userId, offset, limit) => { //get all the trips of one driver
   console.log(limit)
   console.log(offset)
-  const baseQuery = 'SELECT v.*, c1.nome_citta AS citta_partenza, c2.nome_citta AS citta_destinazione, tv.tipo_viaggio ' +
+  const baseQuery = 'SELECT v.*, c1.nome_citta AS citta_partenza, c2.nome_citta AS citta_destinazione ' +
                   'FROM viaggi v ' +
                   'JOIN citta c1 ON v.id_citta_partenza = c1.id_citta ' +
                   'JOIN citta c2 ON v.id_citta_destinazione = c2.id_citta ' +
-                  'LEFT JOIN tipo_viaggio tv ON v.id_tipo_viaggio = tv.id_tipo_viaggio ' +
                   'WHERE v.id_autista = ? ' + 
                   'LIMIT ? ' +
                   'OFFSET ? ';
@@ -258,10 +284,10 @@ const getUserTrips = (userId, offset, limit) => {
 };
 
 const createTrip = (tripData) => {
-  const { id_autista, data_partenza, ora_partenza, contributo_economico, tempo_percorrenza, posti_disponibili, id_citta_partenza, id_citta_destinazione, id_tipo_viaggio } = tripData;
+  const { id_autista, data_partenza, ora_partenza, contributo_economico, tempo_percorrenza, posti_disponibili, id_citta_partenza, id_citta_destinazione,} = tripData;
 
-  const query = 'INSERT INTO viaggi (id_autista, data_partenza, ora_partenza, contributo_economico, tempo_percorrenza, posti_disponibili, id_citta_partenza, id_citta_destinazione, id_tipo_viaggio) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
-  const values = [id_autista, data_partenza, ora_partenza, contributo_economico, tempo_percorrenza, posti_disponibili, id_citta_partenza, id_citta_destinazione, id_tipo_viaggio];
+  const query = 'INSERT INTO viaggi (id_autista, data_partenza, ora_partenza, contributo_economico, tempo_percorrenza, posti_disponibili, id_citta_partenza, id_citta_destinazione) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+  const values = [id_autista, data_partenza, ora_partenza, contributo_economico, tempo_percorrenza, posti_disponibili, id_citta_partenza, id_citta_destinazione];
 
   return new Promise((resolve, reject) => {
     db.execute(query, values, (err, result) => {
@@ -287,11 +313,10 @@ function queryDatabase(query, params = []) {
 }
 
 async function searchTrips(data, limit, offset) {
-  let baseQuery = 'SELECT v.*, c1.nome_citta AS citta_partenza, c2.nome_citta AS citta_destinazione, tv.tipo_viaggio ' +
+  let baseQuery = 'SELECT v.*, c1.nome_citta AS citta_partenza, c2.nome_citta AS citta_destinazione, v.id_autista ' +
                   'FROM viaggi v ' +
                   'JOIN citta c1 ON v.id_citta_partenza = c1.id_citta ' +
                   'JOIN citta c2 ON v.id_citta_destinazione = c2.id_citta ' +
-                  'LEFT JOIN tipo_viaggio tv ON v.id_tipo_viaggio = tv.id_tipo_viaggio ' +
                   'WHERE v.id_citta_partenza = ? AND v.id_citta_destinazione = ?';
   let params = [data.id_citta_partenza, data.id_citta_destinazione];
   let types = 'ii';
@@ -333,3 +358,95 @@ const handleGetUserDetails = (data, ws) => {
     ws.send(JSON.stringify({ type: 'userDetails', user: results[0] }));
   });
 };
+
+
+function getAutistaReviewDetails(autistaId, ws) {
+  const autistaQuery = 'SELECT * FROM autisti WHERE id_autista =?';
+  db.execute(autistaQuery, [autistaId], (err, results) => {
+    if (err) {
+      console.error('Database connection error:', err);
+      ws.send(JSON.stringify({ status: 'failure', message: 'Error connecting to database' }));
+      return;
+    }
+
+    const autista = results[0];
+    const reviewQuery = 'SELECT * FROM feedback_autisti_utenti WHERE id_autista =?';
+    db.execute(reviewQuery, [autistaId], (err, reviewResults) => {
+      if (err) {
+        console.error('Database connection error:', err);
+        ws.send(JSON.stringify({ status: 'failure', message: 'Error connecting to database' }));
+        return;
+      }
+
+      const reviews = reviewResults;
+      const averageRatingQuery = 'SELECT AVG(voto) as averageRating FROM feedback_autisti_utenti WHERE id_autista =?';
+      db.execute(averageRatingQuery, [autistaId], (err, averageRatingResults) => {
+        if (err) {
+          console.error('Database connection error:', err);
+          ws.send(JSON.stringify({ status: 'failure', message: 'Error connecting to database' }));
+          return;
+        }
+
+        const averageRating = averageRatingResults[0].averageRating;
+        if(autista){
+          ws.send(JSON.stringify({
+            type: 'autistaRVDetails',
+            status:'success',
+            autista: autista,
+            reviews: reviews,
+            averageRating: averageRating
+          }));
+        }
+        else{
+          ws.send(JSON.stringify({
+            type: 'autistaRVDetails',
+            status:'noDrivers',
+          }));
+        }
+        
+      });
+    });
+  });
+
+
+}
+
+function getUserReviewDetails(userId, ws){
+  const query = 'SELECT * FROM utenti WHERE id_utente =?';
+  db.execute(query, [userId], (err, results) => {
+    if (err) {
+      console.error('Database connection error:', err);
+      ws.send(JSON.stringify({ status: 'failure', message: 'Error connecting to database' }));
+      return;
+    }
+
+    const user = results[0];
+    const reviewQuery = 'SELECT * FROM feedback_utenti_autisti WHERE id_utente =?';
+    db.execute(reviewQuery, [userId], (err, reviewResults) => {
+      if (err) {
+        console.error('Database connection error:', err);
+        ws.send(JSON.stringify({ status: 'failure', message: 'Error connecting to database' }));
+        return;
+      }
+
+      const reviews = reviewResults;
+      const averageRatingQuery = 'SELECT AVG(voto) as averageRating FROM feedback_utenti_autisti WHERE id_utente =?';
+      db.execute(averageRatingQuery, [userId], (err, averageRatingResults) => {
+        if (err) {
+          console.error('Database connection error:', err);
+          ws.send(JSON.stringify({ status: 'failure', message: 'Error connecting to database' }));
+          return;
+        }
+
+        const averageRating = averageRatingResults[0].averageRating;
+        ws.send(JSON.stringify({
+          type: 'userRVDetails',
+          status:'success',
+          user: user,
+          reviews: reviews,
+          averageRating: averageRating
+        }));
+      });
+    });
+  });
+}
