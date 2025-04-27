@@ -34,6 +34,8 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Utente.</h1>
     <select id="id_citta_destinazione" name="id_citta_destinazione" required>
         <option value="">Select a city</option>
     </select><br>
+    <label for="posti_richiesti">People on board:</label>
+    <input type="number" id="posti_richiesti" name="posti_richiesti" required><br>
     <input type="hidden" name="search" value="1">
     <input type="submit" value="Search Trips">
 </form>
@@ -43,12 +45,13 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Utente.</h1>
 <div id="trips">
 <tr>Search for your trip!</tr>
 </div>
-
-
-
+<br>
+<hr>
+<br>
 
 <!-- Search form -->
 <form id="search-form">
+<h2>Search for a Driver</h2>
   <input type="number" id="search-id" placeholder="Enter autista ID">
   <button type="submitSearch">Search</button>
 </form>
@@ -106,7 +109,7 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Utente.</h1>
                 <td>${trip.ora_partenza}</td>
                 <td>${trip.contributo_economico}</td>
                 <td>${trip.tempo_percorrenza}</td>
-                <td>${trip.posti_disponibili}</td>
+                <td>${trip.posti_disponibili - trip.posti_occupati}</td>
                 <td>${trip.citta_partenza}</td>
                 <td>${trip.citta_destinazione}</td>
                 <td><button onclick="applyToTrip(${trip.id_viaggio})">Apply</button></td>

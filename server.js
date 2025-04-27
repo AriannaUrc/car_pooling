@@ -108,6 +108,17 @@ wss.on('connection', (ws, req) => {
           ws.send(JSON.stringify({ status:'success', message: 'Review posted successfully' }));
         });
         break;
+
+      case 'acceptApplication':
+      const { applicationIdA, tripIdA } = data;
+      console.log(applicationIdA, tripIdA)
+      handleAcceptApplication(applicationIdA, tripIdA, ws);
+      break;
+
+      case 'closeApplications':
+        const { tripId: tripIdClose } = data;
+        handleCloseApplications(tripIdClose, ws);
+        break;
     }
   });
 
@@ -230,10 +241,10 @@ const handleGetApplications = (data, ws) => {
   console.log("applicants for " + tripId);
 
   const query = `
-    SELECT a.id, a.id_utente, a.n_passeggeri, u.nome, u.cognome, u.email
+    SELECT a.*, u.nome, u.cognome, u.email
     FROM applicazioni a
     JOIN utenti u ON a.id_utente = u.id_utente
-    WHERE a.id_viaggio =?
+    WHERE a.id_viaggio =? AND a.stato = 'in_attesa'
   `;
 
   // Execute query to check user existence
@@ -332,6 +343,11 @@ async function searchTrips(data, limit, offset) {
       types += 's';
     }
   }
+
+  baseQuery += ' AND v.posti_disponibili - posti_occupati >= ?';
+  baseQuery += ' AND v.applicazione_aperte  = ?';
+
+  params.push(data.posti_richiesti, true);
 
   baseQuery += ' ORDER BY v.data_partenza, v.ora_partenza LIMIT '+ limit + ' OFFSET ' + offset;
 
@@ -450,3 +466,92 @@ function getUserReviewDetails(userId, ws){
     });
   });
 }
+
+
+
+const handleAcceptApplication = (applicationId, tripId, ws) => {
+  const query = 'SELECT * FROM applicazioni WHERE id =?';
+  db.execute(query, [applicationId], (err, results) => {
+    if (err) {
+      console.error('Database connection error:', err);
+      ws.send(JSON.stringify({ status: 'failure', message: 'Error connecting to database' }));
+      return;
+    }
+
+    const application = results[0];
+    const query2 = 'SELECT * FROM viaggi WHERE id_viaggio =?';
+    db.execute(query2, [tripId], (err, results2) => {
+      if (err) {
+        console.error('Database connection error:', err);
+        ws.send(JSON.stringify({ status: 'failure', message: 'Error connecting to database' }));
+        return;
+      }
+
+      const trip = results2[0];
+      if (trip.posti_disponibili - trip.posti_occupati >= application.n_passeggeri) {
+        
+        //if all seats are taken close application
+        if (trip.posti_disponibili - application.n_passeggeri === 0) {
+          const query4 = 'UPDATE viaggi SET applicazione_aperte =? WHERE id_viaggio =?';
+          db.execute(query4, [false, tripId], (err, results4) => {
+            if (err) {
+              console.error('Database connection error:', err);
+              ws.send(JSON.stringify({ status: 'failure', message: 'Error connecting to database' }));
+              return;
+            }
+          });
+          handleCloseApplications(tripId, ws)
+        }
+
+
+        const query3 = 'UPDATE viaggi SET posti_occupati = posti_occupati +? WHERE id_viaggio =?';
+        db.execute(query3, [application.n_passeggeri, tripId], (err, results3) => {
+          if (err) {
+            console.error('Database connection error:', err);
+            ws.send(JSON.stringify({ status: 'failure', message: 'Error connecting to database' }));
+            return;
+          }
+
+          const query4 = 'UPDATE applicazioni SET stato =? WHERE id =?';
+          db.execute(query4, ['accepted', applicationId], (err, results4) => {
+            if (err) {
+              console.error('Database connection error:', err);
+              ws.send(JSON.stringify({ status: 'failure', message: 'Error connecting to database' }));
+              return;
+            }
+
+            ws.send(JSON.stringify({ status:'success', message: 'Application accepted' }));
+            // Send notification to client
+            const query5 = 'SELECT * FROM utenti WHERE id_utente =?';
+            db.execute(query5, [application.id_utente], (err, results5) => {
+              if (err) {
+                console.error('Database connection error:', err);
+                ws.send(JSON.stringify({ status: 'failure', message: 'Error connecting to database' }));
+                return;
+              }
+
+              const user = results5[0];
+              // Send notification to client
+              ws.send(JSON.stringify({ type: 'notification', message: 'Your application has been accepted' }));
+            });
+          });
+        });
+      } else {
+        ws.send(JSON.stringify({ status: 'failure', message: 'Not enough seats available' }));
+      }
+    });
+  });
+};
+
+const handleCloseApplications = (tripId, ws) => {
+  const query = 'UPDATE viaggi SET applicazione_aperte =? WHERE id_viaggio =?';
+  db.execute(query, [false, tripId], (err, results) => {
+    if (err) { 
+      console.error('Database connection error:', err);
+      ws.send(JSON.stringify({ status: 'failure', message: 'Error connecting to database' }));
+      return;
+    }
+
+    ws.send(JSON.stringify({ status:'success', message: 'Applications closed' }));
+  });
+};

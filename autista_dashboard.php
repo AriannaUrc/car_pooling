@@ -170,7 +170,7 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Autista.</h1
             <td>${trip.posti_disponibili}</td>
             <td>${trip.citta_partenza}</td>
             <td>${trip.citta_destinazione}</td>
-            <td><button onclick="getApplications(${trip.id_viaggio})">View Applications</button></td>
+            <td><button onclick="getApplications(${trip.id_viaggio})">View Applications</button> <button onclick="closeApplications(${trip.id_viaggio})">Close Applications</button></td>
             `;
             newTbody.appendChild(row);
         });
@@ -201,15 +201,15 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Autista.</h1
         applicationsTable = document.getElementById('applicationsTable');
         const newTbody = document.createElement('tbody');
         applications.forEach(application => {
-            const row = document.createElement('tr');
-            row.innerHTML += `
-            <td>${application.nome} ${application.cognome}</td>
-            <td>${application.email}</td>
-            <td>${application.n_passeggeri}</td>
-            <td><button onclick="getUserDetails(${application.id_utente})">View Details</button></td>
-            `;
-            newTbody.appendChild(row);
-        });
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${application.nome} ${application.cognome}</td>
+          <td>${application.email}</td>
+          <td>${application.n_passeggeri}</td>
+          <td><button onclick="acceptApplication(${application.id}, ${application.id_viaggio})">Accept</button></td>
+        `;
+        newTbody.appendChild(row);
+      });
         applicationsTable.appendChild(newTbody);
         }
         
@@ -413,5 +413,13 @@ function displaySearchResults(data) {
   }
 
 
+}
+
+async function acceptApplication(applicationId, tripId) {
+  ws.send(JSON.stringify({ action: 'acceptApplication', applicationIdA: applicationId, tripIdA: tripId }));
+}
+
+async function closeApplications(tripId) {
+  ws.send(JSON.stringify({ action: 'closeApplications', tripId }));
 }
 </script>
