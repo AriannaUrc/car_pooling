@@ -73,6 +73,8 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Utente.</h1>
     <input type="date" id="data_partenza" name="data_partenza"><br>
     <label for="ora_partenza">Time of Departure:</label>
     <input type="time" id="ora_partenza" name="ora_partenza"><br>
+    <label for="animali_allowed">Allow Animals:</label>
+    <input type="checkbox" id="animali_allowed" name="animali_allowed"><br>
     <label for="id_citta_partenza">City of Departure:</label>
     <select id="id_citta_partenza" name="id_citta_partenza" required>
         <option value="">Select a city</option>

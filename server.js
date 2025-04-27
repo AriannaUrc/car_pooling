@@ -407,6 +407,13 @@ async function searchTrips(data, limit, offset) {
     }
   }
 
+  if(data.animali_allowed=='on'){
+    baseQuery+= 'AND v.animali = true '
+  }
+  else{
+    baseQuery+= 'AND v.animali = false '
+  }
+
   baseQuery += ' AND v.posti_disponibili - posti_occupati >= ?';
   baseQuery += ' AND v.applicazione_aperte  = ?';
 
