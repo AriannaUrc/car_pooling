@@ -67,6 +67,11 @@ wss.on('connection', (ws, req) => {
         ws.send(JSON.stringify({ type: 'cities', cities }));
         break;
 
+      case 'getStops':
+        const stops = await queryDatabase('SELECT id, nome FROM stops');
+        ws.send(JSON.stringify({ type: 'stops', stops }));
+        break;
+
 
       case 'searchTrips':
         const trips = await searchTrips(data.data, data.limitN, data.offsetN);
@@ -308,10 +313,35 @@ const getUserTrips = (userId, offset, limit) => { //get all the trips of one dri
 };
 
 const createTrip = (tripData) => {
-  const { id_autista, data_partenza, ora_partenza, contributo_economico, tempo_percorrenza, posti_disponibili, id_citta_partenza, id_citta_destinazione,} = tripData;
+  const {
+    id_autista,
+    data_partenza,
+    ora_partenza,
+    contributo_economico,
+    tempo_percorrenza,
+    fermate_servizio,
+    animali_allowed,
+    posti_disponibili,
+    id_citta_partenza,
+    id_citta_destinazione,
+  } = tripData;
 
-  const query = 'INSERT INTO viaggi (id_autista, data_partenza, ora_partenza, contributo_economico, tempo_percorrenza, posti_disponibili, id_citta_partenza, id_citta_destinazione) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
-  const values = [id_autista, data_partenza, ora_partenza, contributo_economico, tempo_percorrenza, posti_disponibili, id_citta_partenza, id_citta_destinazione];
+  // Convert animali_allowed to boolean
+  const animali = animali_allowed === 'on';
+
+  // Insert trip into viaggi table
+  const query = 'INSERT INTO viaggi (id_autista, data_partenza, ora_partenza, contributo_economico, tempo_percorrenza, animali, posti_disponibili, id_citta_partenza, id_citta_destinazione) VALUES (?,?,?,?,?,?,?,?,?)';
+  const values = [
+    id_autista,
+    data_partenza,
+    ora_partenza,
+    contributo_economico,
+    tempo_percorrenza,
+    animali,
+    posti_disponibili,
+    id_citta_partenza,
+    id_citta_destinazione,
+  ];
 
   return new Promise((resolve, reject) => {
     db.execute(query, values, (err, result) => {
@@ -321,8 +351,28 @@ const createTrip = (tripData) => {
         return;
       }
 
-      console.log(result);
-      resolve({ status: 'success', message: 'Trip created successfully' });
+      const tripId = result.insertId;
+
+      // Insert stops into stops-viaggi table
+      var stopsQuery = 'INSERT INTO `stops-viaggi` (id_viaggio, id_stop) VALUES ';
+      var stopsValues = [];
+
+      const placeholders = fermate_servizio.map((stop, index) => {
+        stopsValues.push(tripId, stop);
+        return `(?,?)`;
+      }).join(', ');
+
+      stopsQuery += placeholders;
+
+      db.execute(stopsQuery, stopsValues, (err) => {
+        if (err) {
+          console.error('Database connection error:', err);
+          reject({ status: 'failure', message: 'Error adding stops to trip' });
+          return;
+        }
+
+        resolve({ status:'success', message: 'Trip created successfully' });
+      });
     });
   });
 };

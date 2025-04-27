@@ -32,6 +32,11 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Autista.</h1
     <input type="number" id="contributo_economico" name="contributo_economico" step="0.01" required><br>
     <label for="tempo_percorrenza">Travel Duration (minutes):</label>
     <input type="number" id="tempo_percorrenza" name="tempo_percorrenza" required><br>
+    <label for="fermate_servizio">Pit Stops:</label>
+    <select id="fermate_servizio" name="fermate_servizio" multiple>
+    </select><br>
+    <label for="animali_allowed">Allow Animals:</label>
+    <input type="checkbox" id="animali_allowed" name="animali_allowed"><br>
     <label for="posti_disponibili">Available Seats:</label>
     <input type="number" id="posti_disponibili" name="posti_disponibili" required><br>
     <label for="id_citta_partenza">City of Departure:</label>
@@ -96,6 +101,7 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Autista.</h1
     ws.onopen = () => {
         console.log('WebSocket connected');
         ws.send(JSON.stringify({ action: 'getCities' }));
+        ws.send(JSON.stringify({ action: 'getStops' }));
         ws.send(JSON.stringify({ action: 'getTripTypes' }));
         ws.send(JSON.stringify({ action: 'getTrips', userId: "<?php echo $_SESSION['user_id']; ?>", limitN: limit, offsetN: offset }));
     };
@@ -122,6 +128,8 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Autista.</h1
             displayUserDetails(data.user);
         } else if (data.type === 'userRVDetails') {
             displaySearchResults(data);
+        } else if (data.type === 'stops') {
+          populateStops(data.stops);
         }
     };
 
@@ -136,6 +144,16 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Autista.</h1
             destinationSelect.appendChild(option.cloneNode(true));
         });
     }
+
+  function populateStops(stops) {
+      const pitStops = document.getElementById('fermate_servizio');
+      stops.forEach(stop => {
+          const option = document.createElement('option');
+          option.value = stop.id;
+          option.textContent = stop.nome;
+          pitStops.appendChild(option);
+      });
+  }
 
 
     function displayTrips(trips) {
@@ -256,13 +274,18 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Autista.</h1
         ws.send(JSON.stringify({ action: 'getApplications', tripId }));
     }
 
-    document.getElementById('tripForm').onsubmit = async function(event) {
+    document.getElementById('tripForm').onsubmit = function(event) {
         event.preventDefault();
         const formData = new FormData(this);
         const data = {};
         formData.forEach((value, key) => data[key] = value);
         data.id_autista = "<?php echo $_SESSION['user_id']; ?>";
-        console.info(JSON.stringify({ action: 'createTrip', data }));
+        // Get the selected stops
+        const stopsSelect = document.getElementById('fermate_servizio');
+        const selectedStops = Array.from(stopsSelect.selectedOptions, option => option.value);
+        data.fermate_servizio = selectedStops;
+        console.log(JSON.stringify({ action: 'createTrip', data }));
+
         ws.send(JSON.stringify({ action: 'createTrip', data }));
     };
 
