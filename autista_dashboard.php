@@ -131,6 +131,9 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Autista.</h1
         } else if (data.type === 'stops') {
           populateStops(data.stops);
         }
+        else if(data.type='noSeats'){
+          //alert("There arent enough seats");
+        }
         else if(data.type='applicationAccepted'){
           window.location.reload();
         }
