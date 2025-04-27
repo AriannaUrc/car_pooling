@@ -1,7 +1,7 @@
 <?php
 // Start the session
 session_start();
-var_dump($_SESSION);
+//var_dump($_SESSION);
 
 if (isset($_POST['logout'])) {
     session_destroy();
@@ -15,61 +15,227 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'autista') {
     exit;
 }
 
-echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Autista.</h1>";
+//echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Autista.</h1>";
 ?>
 
-<form action="" method="post">
-    <input type="submit" name="logout" value="Logout">
-</form>
+<div class="container">
+  <div class="header">
+  <h1>Welcome, <?php echo $_SESSION['username'];?>! You are logged in as a Driver.</h1>
+    <form action="" method="post">
+      <input type="submit" name="logout" value="Logout" class="logout-button">
+    </form>
+  </div>
+  <div class="row">
+    <div class="col-left">
+      <h2>Add a New Trip</h2>
+      <form id="tripForm" method="post">
+        <label for="data_partenza">Date of Departure:</label>
+        <input type="date" id="data_partenza" name="data_partenza" required><br>
+        <label for="ora_partenza">Time of Departure:</label>
+        <input type="time" id="ora_partenza" name="ora_partenza" required><br>
+        <label for="contributo_economico">Economic Contribution:</label>
+        <input type="number" id="contributo_economico" name="contributo_economico" step="0.01" required><br><br>
+        <label for="tempo_percorrenza">Travel Duration (minutes):</label>
+        <input type="number" id="tempo_percorrenza" name="tempo_percorrenza" required><br><br>
+        <label for="fermate_servizio">Pit Stops:</label>
+        <select id="fermate_servizio" name="fermate_servizio" multiple>
+        </select><br>
+        <label for="animali_allowed">Allow Animals:</label>
+        <input type="checkbox" id="animali_allowed" name="animali_allowed"><br>
+        <label for="posti_disponibili">Available Seats:</label>
+        <input type="number" id="posti_disponibili" name="posti_disponibili" required><br><br>
+        <label for="id_citta_partenza">City of Departure:</label>
+        <select id="id_citta_partenza" name="id_citta_partenza" required>
+          <option value="">Select a city</option>
+        </select><br>
+        <label for="id_citta_destinazione">City of Destination:</label>
+        <select id="id_citta_destinazione" name="id_citta_destinazione" required>
+          <option value="">Select a city</option>
+        </select><br>
+        <input type="submit" value="Add Trip">
+      </form>
+    </div>
+    <div class="col-right">
+      <h2>Your Trips</h2>
+      <table id="tripsTable" border="1"></table>
+      <button id="prev" disabled>Previous</button>
+      <button id="next">Next</button>
+    </div>
+  </div>
+</div>
 
-<h2>Add a New Trip</h2>
-<form id="tripForm" method="post">
-    <label for="data_partenza">Date of Departure:</label>
-    <input type="date" id="data_partenza" name="data_partenza" required><br>
-    <label for="ora_partenza">Time of Departure:</label>
-    <input type="time" id="ora_partenza" name="ora_partenza" required><br>
-    <label for="contributo_economico">Economic Contribution:</label>
-    <input type="number" id="contributo_economico" name="contributo_economico" step="0.01" required><br>
-    <label for="tempo_percorrenza">Travel Duration (minutes):</label>
-    <input type="number" id="tempo_percorrenza" name="tempo_percorrenza" required><br>
-    <label for="fermate_servizio">Pit Stops:</label>
-    <select id="fermate_servizio" name="fermate_servizio" multiple>
-    </select><br>
-    <label for="animali_allowed">Allow Animals:</label>
-    <input type="checkbox" id="animali_allowed" name="animali_allowed"><br>
-    <label for="posti_disponibili">Available Seats:</label>
-    <input type="number" id="posti_disponibili" name="posti_disponibili" required><br>
-    <label for="id_citta_partenza">City of Departure:</label>
-    <select id="id_citta_partenza" name="id_citta_partenza" required>
-        <option value="">Select a city</option>
-    </select><br>
-    <label for="id_citta_destinazione">City of Destination:</label>
-    <select id="id_citta_destinazione" name="id_citta_destinazione" required>
-        <option value="">Select a city</option>
-    </select><br>
-    <input type="submit" value="Add Trip">
-</form>
 
-<h2>Your Trips</h2>
-<table id="tripsTable" border="1"></table>
+<style>
+  .container {
+  max-width: 90%;
+  margin: 40px auto;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
 
-<button id="prev" disabled>Previous</button>
-<button id="next">Next</button>
+.header {
+    background-color: #CCC;
+    color: #000;
+    padding: 10px;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+    position: relative;
+    border-radius: 9px;
+}
 
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
 
+.col-left {
+  width: 45%;
+  margin-right: 20px;
+}
 
-<!-- Search form -->
-<form id="search-form">
-  <input type="number" id="search-id" placeholder="Enter user ID">
-  <button type="submitSearch">Search</button>
-</form>
+.col-right {
+  width: 45%;
+}
 
-<!-- Search results container -->
-<div id="search-results"></div>
+#tripForm {
+  padding: 10px;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
 
+#tripForm label {
+  display: block;
+  margin-bottom: 10px;
+}
+
+#tripForm input[type="date"], #tripForm input[type="time"], #tripForm select {
+  width: 100%;
+  height: 40px;
+  margin-bottom: 20px;
+  padding: 5px;
+  border: 1px solid #ccc;
+}
+
+#tripForm input[type="checkbox"] {
+  margin-bottom: 20px;
+}
+
+#tripForm input[type="submit"] {
+  width: 100px;
+  height: 40px;
+  background-color: #333;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#tripForm input[type="submit"]:hover {
+  background-color: #444;
+}
+
+Table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+Table th, Table td {
+  border: 1px solid #ddd;
+  padding: 5px;
+  text-align: left;
+}
+
+Table th {
+  background-color: #f0f0f0;
+}
+
+#prev, #next {
+  margin-top: 10px;
+  background-color: #333;
+  color: #fff;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 80px;
+}
+
+#prev:hover, #next:hover {
+  background-color: #444;
+}
+
+#prev:disabled, #next:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.search-form {
+  margin-top: 40px;
+}
+
+.search-form label {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.search-form input[type="number"] {
+  width: 100%;
+  height: 40px;
+  margin-bottom: 20px;
+  padding: 10px;
+  border: 1px solid #ccc;
+}
+
+.search-form button[type="submit"] {
+  width: 100px;
+  height: 40px;
+  background-color: #333;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.search-form button[type="submit"]:hover {
+  background-color: #444;
+}
+
+#search-results {
+  padding: 20px;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#search-results h2 {
+  margin-top: 0;
+}
+
+@media only screen and (max-width: 768px) {
+ .container {
+    margin: 20px auto;
+  }
+ .row {
+    flex-direction: column;
+  }
+ .col-left,.col-right {
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: 20px;
+  }
+}
+</style>
 <script>
 
-    const limit = 3;
+    const limit = 7;
     let offset = 0;
 
 
@@ -170,7 +336,7 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Autista.</h1
         }
         const newTbody = document.createElement('tbody');
         const firstrow = document.createElement('tr');
-        firstrow.innerHTML = '<th>Date of Departure</th><th>Time of Departure</th><th>Economic Contribution</th><th>Travel Duration (minutes)</th><th>Available Seats</th><th>City of Departure</th><th>City of Destination</th><td>Applicazioni Aperte</td><th>Registrations</th>';
+        firstrow.innerHTML = '<th>Date of Departure</th><th>Time of Departure</th><th>Economic Contribution</th><th>Travel Duration (minutes)</th><th>Available Seats</th><th>City of Departure</th><th>City of Destination</th><td>App. Aperte</td><th>Registrations</th>';
         newTbody.appendChild(firstrow);
         if(trips.length <= 0 && offset > 0){
             const row = document.createElement('tr');

@@ -38,8 +38,82 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 ?>
 
+<style>
+    body{
+        background-color: #f0f0f0;
+    }
+        
+    .container {
+      font-family: Arial, sans-serif;
+      width: 30%;
+      align-items: center;
+    }
+    
+    .login-container,.register-container {
+      width: 300px;
+      margin: 50px auto;
+      padding: 20px;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .login-form,.register-form {
+      margin-top: 20px;
+    }
+    
+    input[type="text"], input[type="password"], input[type="email"], select {
+      width: 100%;
+      margin-bottom: 20px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    
+    input[type="submit"] {
+      width: 100%;
+      background-color: #4CAF50;
+      color: #fff;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    
+    input[type="submit"]:hover {
+      background-color: #3e8e41;
+    }
+    
+    .login-link,.register-link {
+      text-align: center;
+      margin-top: 20px;
+    }
+    
+    .login-link a,.register-link a {
+      text-decoration: none;
+      color: #4CAF50;
+    }
+    
+    .login-link a:hover,.register-link a:hover {
+      color: #3e8e41;
+    }
+    
+    #numeroPatenteField {
+      margin-bottom: 20px;
+    }
+    
+    .error-message {
+      color: #f00;
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+    </style>
+
+
 <!DOCTYPE html>
 <html lang="en">
+<div class="container">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -129,4 +203,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         });
     </script>
 </body>
+</div>
+
 </html>
