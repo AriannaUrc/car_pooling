@@ -146,7 +146,7 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Autista.</h1
         }
         const newTbody = document.createElement('tbody');
         const firstrow = document.createElement('tr');
-        firstrow.innerHTML = '<th>Date of Departure</th><th>Time of Departure</th><th>Economic Contribution</th><th>Travel Duration (minutes)</th><th>Available Seats</th><th>City of Departure</th><th>City of Destination</th><th>Registrations</th>';
+        firstrow.innerHTML = '<th>Date of Departure</th><th>Time of Departure</th><th>Economic Contribution</th><th>Travel Duration (minutes)</th><th>Available Seats</th><th>City of Departure</th><th>City of Destination</th><td>Applicazioni Aperte</td><th>Registrations</th>';
         newTbody.appendChild(firstrow);
         if(trips.length <= 0 && offset > 0){
             const row = document.createElement('tr');
@@ -170,6 +170,7 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Autista.</h1
             <td>${trip.posti_disponibili}</td>
             <td>${trip.citta_partenza}</td>
             <td>${trip.citta_destinazione}</td>
+            <td>${trip.applicazione_aperte}</td>
             <td><button onclick="getApplications(${trip.id_viaggio})">View Applications</button> <button onclick="closeApplications(${trip.id_viaggio})">Close Applications</button></td>
             `;
             newTbody.appendChild(row);
@@ -417,9 +418,12 @@ function displaySearchResults(data) {
 
 async function acceptApplication(applicationId, tripId) {
   ws.send(JSON.stringify({ action: 'acceptApplication', applicationIdA: applicationId, tripIdA: tripId }));
+  window.location.reload();
+  //getApplications(tripId);
 }
 
 async function closeApplications(tripId) {
   ws.send(JSON.stringify({ action: 'closeApplications', tripId }));
+  window.location.reload();
 }
 </script>

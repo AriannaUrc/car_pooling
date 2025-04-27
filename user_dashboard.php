@@ -1,3 +1,50 @@
+<style>
+  body {
+    font-family: Arial, sans-serif;
+}
+
+.inbox-container {
+    width: 400px;
+    margin: 40px auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.notifications-list {
+    height: 250px; /* Fixed height to show 5 notifications */
+    overflow-y: auto; /* Add scrollbar if content exceeds height */
+    padding: 0 10px;
+    margin-top: 20px;
+}
+
+.notification-item {
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+}
+
+.notification-item:last-child {
+    border-bottom: none;
+}
+
+.notification-item.message {
+    font-weight: bold;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.notification-item.date {
+    color: #666;
+    font-size: 14px;
+}
+
+.read {
+    background-color: #f0f0f0;
+}
+</style>
+
 <?php
 session_start();
 var_dump($_SESSION);
@@ -46,6 +93,15 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Utente.</h1>
 <tr>Search for your trip!</tr>
 </div>
 <br>
+
+
+
+<div class="inbox-container">
+  <h2>Notifications</h2>
+  <div id="notifications-list" class="notifications-list"></div>
+</div>
+
+<br>
 <hr>
 <br>
 
@@ -69,7 +125,10 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Utente.</h1>
     ws.onopen = () => {
         console.log('WebSocket connected');
         ws.send(JSON.stringify({ action: 'getCities' }));
+        ws.send(JSON.stringify({ action: 'getNotifications', userId : <?php echo $_SESSION['user_id']?> }));
     };
+
+    
 
     ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
@@ -81,6 +140,9 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Utente.</h1>
         }
         else if (data.type === 'autistaRVDetails') {
             displaySearchResults(data);
+        }
+        else if(data.type === 'notifications'){
+          displayNotifications(data.notifications)
         }
     };
 
@@ -335,5 +397,34 @@ function displaySearchResults(data) {
   }
 
 
+}
+
+
+
+function displayNotifications(notifications) {
+    const notificationsList = document.getElementById('notifications-list');
+    notificationsList.innerHTML = ''; // Clear existing notifications
+
+    notifications.forEach(notification => {
+        const notificationItem = document.createElement('div');
+        notificationItem.classList.add('notification-item');
+        if (notification.stato ==='read') {
+            notificationItem.classList.add('read');
+        }
+
+        const messageElement = document.createElement('span');
+        messageElement.classList.add('message');
+        messageElement.textContent = notification.messaggio;
+
+        const dateElement = document.createElement('span');
+        dateElement.classList.add('date');
+        dateElement.textContent = new Date(notification.data_notifica).toLocaleString();
+
+        notificationItem.appendChild(messageElement);
+        notificationItem.appendChild(document.createElement('br'));
+        notificationItem.appendChild(dateElement);
+
+        notificationsList.appendChild(notificationItem);
+    });
 }
 </script>
