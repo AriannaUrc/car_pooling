@@ -127,9 +127,9 @@ wss.on('connection', (ws, req) => {
         break;
 
       case 'acceptApplication':
-      const { applicationIdA, tripIdA } = data;
+      const { applicationIdA, tripIdA, accepted } = data;
       console.log(applicationIdA, tripIdA)
-      handleAcceptApplication(applicationIdA, tripIdA, ws);
+      handleAcceptApplication(applicationIdA, tripIdA, accepted, ws);
       break;
 
       case 'closeApplications':
@@ -539,78 +539,112 @@ function getUserReviewDetails(userId, ws){
 
 
 
-const handleAcceptApplication = (applicationId, tripId, ws) => {
-    const query = 'SELECT * FROM applicazioni WHERE id =?';
-    db.execute(query, [applicationId], (err, results) => {
+const handleAcceptApplication = (applicationId, tripId, accepted, ws) => {
+  const query = 'SELECT * FROM applicazioni WHERE id =?';
+  db.execute(query, [applicationId], (err, results) => {
       if (err) {
-        console.error('Database connection error:', err);
-        ws.send(JSON.stringify({ status: 'failure', message: 'Error connecting to database' }));
-        return;
+          console.error('Database connection error:', err);
+          ws.send(JSON.stringify({ status: 'failure', message: 'Error connecting to database' }));
+          return;
       }
 
-    const application = results[0];
+      const application = results[0];
 
-    const query2 = 'SELECT v.*, cp.nome_citta AS partenza, cd.nome_citta AS destinazione FROM viaggi v INNER JOIN citta cp ON v.id_citta_partenza = cp.id_citta INNER JOIN citta cd ON v.id_citta_destinazione = cd.id_citta WHERE v.id_viaggio =?';
-    db.execute(query2, [tripId], (err, results2) => {
-      if (err) {
-        console.error('Database connection error:', err);
-        ws.send(JSON.stringify({ status: 'failure', message: 'Error connecting to database' }));
-        return;
-      }
-
-    const trip = results2[0];
-    console.log(trip)
-
-    if (trip.posti_disponibili - trip.posti_occupati >= application.n_passeggeri) {
-      //if all seats are taken close application
-      if (trip.posti_disponibili - application.n_passeggeri === 0) {
-        const query4 = 'UPDATE viaggi SET applicazione_aperte =? WHERE id_viaggio =?';
-        db.execute(query4, [false, tripId], (err, results4) => {
+      const query2 = 'SELECT v.*, cp.nome_citta AS partenza, cd.nome_citta AS destinazione FROM viaggi v INNER JOIN citta cp ON v.id_citta_partenza = cp.id_citta INNER JOIN citta cd ON v.id_citta_destinazione = cd.id_citta WHERE v.id_viaggio =?';
+      db.execute(query2, [tripId], (err, results2) => {
           if (err) {
-            console.error('Database connection error:', err);
-            ws.send(JSON.stringify({ status: 'failure', message: 'Error connecting to database' }));
-            return;
-          }
-        });
-        handleCloseApplications(tripId, ws)
-      }
-
-        const query3 = 'UPDATE viaggi SET posti_occupati = posti_occupati +? WHERE id_viaggio =?';
-        db.execute(query3, [application.n_passeggeri, tripId], (err, results3) => {
-          if (err) {
-            console.error('Database connection error:', err);
-            ws.send(JSON.stringify({ status: 'failure', message: 'Error connecting to database' }));
-            return;
-          }
-        });
-
-
-        const query4 = 'UPDATE applicazioni SET stato =? WHERE id =?';
-          db.execute(query4, ['accepted', applicationId], (err, results4) => {
-            if (err) {
               console.error('Database connection error:', err);
               ws.send(JSON.stringify({ status: 'failure', message: 'Error connecting to database' }));
               return;
-            }
+          }
 
-            
-          });
-          
+          const trip = results2[0];
 
+          if (accepted) {
+              if (trip.posti_disponibili - trip.posti_occupati < application.n_passeggeri) {
+                  ws.send(JSON.stringify({ status: 'failure', type: 'noSeats', message: 'Not enough seats available' }));
+                  return;
+              }
 
-          // Insert a new notification into the notifiche table
-          const notificationQuery = 'INSERT INTO notifiche (id_utente, messaggio, stato) VALUES (?,?,?)';
-          db.execute(notificationQuery, [application.id_utente, `Your application for the trip from ${trip.partenza} to ${trip.destinazione} for ${application.n_passeggeri} for has been accepted`, 'unread'], (err, results5) => {
-            if (err) {
+              // Update trip
+              const query3 = 'UPDATE viaggi SET posti_occupati = posti_occupati +? WHERE id_viaggio =?';
+              db.execute(query3, [application.n_passeggeri, tripId], (err, results3) => {
+                  if (err) {
+                      console.error('Database connection error:', err);
+                      ws.send(JSON.stringify({ status: 'failure', message: 'Error connecting to database' }));
+                      return;
+                  }
+
+                  // Update application
+                  const query4 = 'UPDATE applicazioni SET stato =? WHERE id =?';
+                  db.execute(query4, ['accepted', applicationId], (err, results4) => {
+                      if (err) {
+                          console.error('Database connection error:', err);
+                          ws.send(JSON.stringify({ status: 'failure', message: 'Error connecting to database' }));
+                          return;
+                      }
+
+                      // Close applications if all seats are taken
+                      if (trip.posti_disponibili - application.n_passeggeri === 0) {
+                          const query5 = 'UPDATE viaggi SET applicazione_aperte =? WHERE id_viaggio =?';
+                          db.execute(query5, [false, tripId], (err, results5) => {
+                              if (err) {
+                                  console.error('Database connection error:', err);
+                                  ws.send(JSON.stringify({ status: 'failure', message: 'Error connecting to database' }));
+                                  return;
+                              }
+
+                              handleCloseApplications(tripId, ws);
+                          });
+                      }
+
+                      // Send notification
+                      const date = new Date(trip.data_partenza);
+                      const year = date.getFullYear();
+                      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                      const day = date.getDate().toString().padStart(2, '0');
+                      const datePart = `${year}-${month}-${day}`;
+                      const notificationQuery = 'INSERT INTO notifiche (id_utente, messaggio, stato) VALUES (?,?,?)';
+                      db.execute(notificationQuery, [application.id_utente, `Your application for the trip from ${trip.partenza} to ${trip.destinazione} for ${application.n_passeggeri} on ${datePart} at ${trip.ora_partenza} has been accepted`, 'unread'], (err, results6) => {
+                          if (err) {
+                              console.error('Database connection error:', err);
+                              ws.send(JSON.stringify({ status: 'failure', message: 'Error connecting to database' }));
+                              return;
+                          }
+
+                          ws.send(JSON.stringify({ status:'success', type: 'applicationAccepted', message: 'Application accepted' }));
+                      });
+                  });
+              });
+          } 
+
+        else{
+          // Update application
+          const query4 = 'UPDATE applicazioni SET stato =? WHERE id =?';
+          db.execute(query4, ['denied', applicationId], (err, results4) => {
+              if (err) {
+                  console.error('Database connection error:', err);
+                  ws.send(JSON.stringify({ status: 'failure', message: 'Error connecting to database' }));
+                  return;
+              }
+
+              // Send notification
+              const date = new Date(trip.data_partenza);
+              const year = date.getFullYear();
+              const month = (date.getMonth() + 1).toString().padStart(2, '0');
+              const day = date.getDate().toString().padStart(2, '0');
+              const datePart = year+"-"+month+"-"+day;
+              const notificationQuery = 'INSERT INTO notifiche (id_utente, messaggio, stato) VALUES (?,?,?)';
+              db.execute(notificationQuery, [application.id_utente, `Your application for the trip from ${trip.partenza} to ${trip.destinazione} for ${application.n_passeggeri} on ${datePart} at ${trip.ora_partenza} has been denied`, 'unread'], (err, results5) => {
+              if (err) {
               console.error('Database connection error:', err);
               ws.send(JSON.stringify({ status: 'failure', message: 'Error connecting to database' }));
               return;
-            }
+              }
 
-            ws.send(JSON.stringify({ status:'success', message: 'Application accepted' }));
+              ws.send(JSON.stringify({ status:'success', type: 'applicationDenied', message: 'Application denied' }));
+              });
           });
-      } else {
-        ws.send(JSON.stringify({ status: 'failure', message: 'Not enough seats available' }));
       }
     });
   });

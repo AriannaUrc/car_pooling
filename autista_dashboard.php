@@ -131,6 +131,9 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Autista.</h1
         } else if (data.type === 'stops') {
           populateStops(data.stops);
         }
+        else if(data.type='applicationAccepted'){
+          window.location.reload();
+        }
     };
 
     function populateCities(cities) {
@@ -179,9 +182,16 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Autista.</h1
         else
         {
             trips.forEach(trip => {
+
+              const date = new Date(trip.data_partenza);
+              const year = date.getFullYear();
+              const month = (date.getMonth() + 1).toString().padStart(2, '0');
+              const day = date.getDate().toString().padStart(2, '0');
+              const datePart = `${year}-${month}-${day}`;
+
             const row = document.createElement('tr');
             row.innerHTML = `
-            <td>${trip.data_partenza}</td>
+            <td>${datePart}</td>
             <td>${trip.ora_partenza}</td>
             <td>${trip.contributo_economico}</td>
             <td>${trip.tempo_percorrenza}</td>
@@ -213,7 +223,7 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Autista.</h1
         <th>Name</th>
         <th>Email</th>
         <th>Number of Passengers</th>
-        <th>View Details</th>
+        <th>Options</th>
         `;
         document.body.appendChild(table);
         
@@ -226,6 +236,7 @@ echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Autista.</h1
           <td>${application.email}</td>
           <td>${application.n_passeggeri}</td>
           <td><button onclick="acceptApplication(${application.id}, ${application.id_viaggio})">Accept</button></td>
+          <td><button onclick="acceptApplication(${application.id}, ${application.id_viaggio}, false)">Deny</button></td>
         `;
         newTbody.appendChild(row);
       });
@@ -439,9 +450,9 @@ function displaySearchResults(data) {
 
 }
 
-async function acceptApplication(applicationId, tripId) {
-  ws.send(JSON.stringify({ action: 'acceptApplication', applicationIdA: applicationId, tripIdA: tripId }));
-  window.location.reload();
+async function acceptApplication(applicationId, tripId, accepted = true) {
+  ws.send(JSON.stringify({ action: 'acceptApplication', applicationIdA: applicationId, tripIdA: tripId, accepted }));
+  //window.location.reload();
   //getApplications(tripId);
 }
 
