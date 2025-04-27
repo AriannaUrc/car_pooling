@@ -1,23 +1,139 @@
-<style>
-  body {
-    font-family: Arial, sans-serif;
+<?php
+ob_start();
+session_start();
+//var_dump($_SESSION);
+
+if (isset($_POST['logout'])) {
+    session_destroy();
+    header("Location: index.php");
+    exit;
 }
 
-.inbox-container {
-    width: 400px;
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'utente') {
+    header('Location: index.php');
+    exit;
+}
+
+?>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    width: 90%;
+    padding: 5%;
+    padding-top:0%;
+    align-items:center;
+}
+
+.container {
+    width: 90%;
     margin: 40px auto;
     padding: 20px;
     background-color: #f9f9f9;
-    border: 1px solid #ddd;
+    border: 10px solid #ddd;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
+.header {
+    background-color: #333;
+    color: #fff;
+    padding: 10px;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+    position: relative;
+}
+
+.header h1 {
+    margin: 0;
+}
+
+.logout-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: #ff0000;
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 80px;
+}
+
+.logout-button:hover {
+    background-color: #cc0000;
+}
+
+.search-form {
+    margin-top: 40px;
+}
+
+.search-form label {
+    display: block;
+    margin-bottom: 10px;
+}
+
+.search-form input[type="date"],.search-form input[type="time"],.search-form select {
+    width: 100%;
+    height: 40px;
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #ccc;
+}
+
+.search-form input[type="checkbox"] {
+    margin-bottom: 20px;
+}
+
+.search-form input[type="submit"] {
+    width: 100px;
+    height: 40px;
+    background-color: #333;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.search-form input[type="submit"]:hover {
+    background-color: #444;
+}
+
+.trips-container {
+    margin-top: 40px;
+}
+
+.trips-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.trips-table th,.trips-table td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+}
+
+.trips-table th {
+    background-color: #f0f0f0;
+}
+
+.pagination-button {
+    margin-top: 10px;
+}
+
+.notifications-container {
+    margin-top: 40px;
+}
+
 .notifications-list {
-    height: 250px; /* Fixed height to show 5 notifications */
-    overflow-y: auto; /* Add scrollbar if content exceeds height */
+    height: 250px;
+    overflow-y: auto;
     padding: 0 10px;
-    margin-top: 20px;
+    border: 1px solid #ddd;
 }
 
 .notification-item {
@@ -36,86 +152,269 @@
 }
 
 .notification-item.date {
-    color: #666;
+    color: #999;
     font-size: 14px;
 }
 
 .read {
     background-color: #f0f0f0;
 }
+
+.search-autista-form {
+    margin-top: 40px;
+}
+
+.search-autista-form input[type="number"] {
+    width: 100%;
+    height: 40px;
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #ccc;
+}
+
+.search-autista-form button[type="submit"] {
+    width: 100px;
+    height: 40px;
+    background-color: #333;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.search-autista-form button[type="submit"]:hover {
+    background-color: #444;
+}
+
+.search-results-container {
+    margin-top: 40px;
+}
+
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.col-left {
+    width: 60%;
+    margin-right: 20px;
+}
+
+.col-right {
+    width: 35%;
+}
+
+#search-results {
+    padding: 20px;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#search-results h2 {
+    margin-top: 0;
+}
+
+.review-container {
+    margin-top: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.review-list {
+    width: 60%;
+}
+
+.review-average {
+    width: 30%;
+    text-align: center;
+}
+
+.review-form {
+  width: 100%;
+    margin-top: 20px;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.review-form label {
+    display: block;
+    margin-bottom: 10px;
+}
+
+.review-form input[type="number"] {
+    width: 100%;
+    height: 40px;
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #ccc;
+}
+
+.review-form textarea {
+    width: 100%;
+    height: 100px;
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #ccc;
+}
+
+.review-form input[type="submit"] {
+    width: 100px;
+    height: 40px;
+    background-color: #333;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.review-form input[type="submit"]:hover {
+    background-color: #444;
+}
+
+#prev-review, #next-review {
+    margin-top: 10px;
+    background-color: #333;
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 80px;
+}
+
+#prev-review:hover, #next-review:hover {
+    background-color: #444;
+}
+
+#prev-review:disabled, #next-review:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.notification-item.message {
+    font-weight: bold;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.notification-item.date {
+    color: #666;
+    font-size: 14px;
+}
+
+.rating-container {
+    margin-top: 10px;
+}
+
+.star-rating {
+    font-size: 20px;
+    color: #ffd700;
+}
+
+.star-rating span {
+    cursor: pointer;
+}
+
+@media only screen and (max-width: 768px) {
+  .container {
+        margin: 20px auto;
+    }
+  .row {
+        flex-direction: column;
+    }
+  .col-left,.col-right {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 20px;
+    }
+}
+
+.review-list ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.review-list li {
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+}
+
+.review-list li:last-child {
+    border-bottom: none;
+}
 </style>
 
-<?php
-session_start();
-var_dump($_SESSION);
 
-if (isset($_POST['logout'])) {
-    session_destroy();
-    header("Location: index.php");
-    exit;
-}
 
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'utente') {
-    header('Location: index.php');
-    exit;
-}
-
-echo "<h1>Welcome, {$_SESSION['username']}! You are logged in as an Utente.</h1>";
-?>
-
-<form action="" method="post">
-    <input type="submit" name="logout" value="Logout">
-</form>
-
-<h2>Search for Trips</h2>
-<form method="get" action="">
-    <label for="data_partenza">Date of Departure:</label>
-    <input type="date" id="data_partenza" name="data_partenza"><br>
-    <label for="ora_partenza">Time of Departure:</label>
-    <input type="time" id="ora_partenza" name="ora_partenza"><br>
-    <label for="animali_allowed">Allow Animals:</label>
-    <input type="checkbox" id="animali_allowed" name="animali_allowed"><br>
-    <label for="id_citta_partenza">City of Departure:</label>
-    <select id="id_citta_partenza" name="id_citta_partenza" required>
-        <option value="">Select a city</option>
-    </select><br>
-    <label for="id_citta_destinazione">City of Destination:</label>
-    <select id="id_citta_destinazione" name="id_citta_destinazione" required>
-        <option value="">Select a city</option>
-    </select><br>
-    <label for="posti_richiesti">People on board:</label>
-    <input type="number" id="posti_richiesti" name="posti_richiesti" required><br>
-    <input type="hidden" name="search" value="1">
-    <input type="submit" value="Search Trips">
-</form>
-
-<h2>Available Trips</h2>
-
-<div id="trips">
-<tr>Search for your trip!</tr>
+<div class="header">
+    <h1>Welcome, <?php echo $_SESSION['username'];?>! You are logged in as an Utente.</h1>
+    <form action="" method="post">
+      <input type="submit" name="logout" value="Logout" class="logout-button">
+    </form>
+  </div>
+  <div class="row">
+    <div class="col-left">
+      <div class="search-form">
+        <h2>Search for Trips</h2>
+        <form method="get" action="">
+          <label for="data_partenza">Date of Departure:</label>
+          <input type="date" id="data_partenza" name="data_partenza"><br>
+          <label for="ora_partenza">Time of Departure:</label>
+          <input type="time" id="ora_partenza" name="ora_partenza"><br>
+          <label for="animali_allowed">Allow Animals:</label>
+          <input type="checkbox" id="animali_allowed" name="animali_allowed"><br>
+          <label for="id_citta_partenza">City of Departure:</label>
+          <select id="id_citta_partenza" name="id_citta_partenza" required>
+            <option value="">Select a city</option>
+          </select><br>
+          <label for="id_citta_destinazione">City of Destination:</label>
+          <select id="id_citta_destinazione" name="id_citta_destinazione" required>
+            <option value="">Select a city</option>
+          </select><br>
+          <label for="posti_richiesti">People on board:</label>
+          <input type="number" id="posti_richiesti" name="posti_richiesti" required><br>
+          <input type="hidden" name="search" value="1">
+          <br>
+          <input type="submit" value="Search Trips">
+        </form>
+      </div>
+      <br>
+      <div class="trips-container">
+        <h2>Available Trips</h2>
+        <div id="trips">
+          <p>Search for your trip!</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-right">
+      <div class="notifications-container">
+        <h2>Notifications</h2>
+        <div id="notifications-list" class="notifications-list"></div>
+      </div>
+      <div class="search-autista-form">
+        <h2>Search for a Driver</h2>
+        <form id="search-form">
+          <input type="number" id="search-id" placeholder="Enter autista ID">
+          <button type="submit">Search</button>
+        </form>
+      </div>
+      <div class="search-results-container">
+        <div id="search-results"></div>
+      </div>
+    </div>
+  </div>
 </div>
-<br>
 
 
-
-<div class="inbox-container">
-  <h2>Notifications</h2>
-  <div id="notifications-list" class="notifications-list"></div>
-</div>
-
-<br>
-<hr>
-<br>
-
-<!-- Search form -->
-<form id="search-form">
-<h2>Search for a Driver</h2>
-  <input type="number" id="search-id" placeholder="Enter autista ID">
-  <button type="submitSearch">Search</button>
-</form>
-
-<!-- Search results container -->
-<div id="search-results"></div>
 
 <script>
 
