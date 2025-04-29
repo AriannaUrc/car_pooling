@@ -54,13 +54,28 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'autista') {
         </select><br>
         <input type="submit" value="Add Trip">
       </form>
+
+      <div class="search-autista-form">
+        <h2>Search for a user</h2>
+        <form id="search-form">
+          <input type="number" id="search-id" placeholder="Enter autista ID">
+          <button type="submit">Search</button>
+        </form>
+      </div>
+      <div class="search-results-container">
+        <div id="search-results"></div>
+      </div>
+    
     </div>
     <div class="col-right">
       <h2>Your Trips</h2>
       <table id="tripsTable" border="1"></table>
       <button id="prev" disabled>Previous</button>
       <button id="next">Next</button>
+      <br><br>
+      <div id="applications-container"></div>
     </div>
+    
   </div>
 </div>
 
@@ -248,7 +263,7 @@ Table th {
 </style>
 <script>
 
-    const limit = 7;
+    const limit = 4;
     let offset = 0;
 
 
@@ -312,6 +327,7 @@ Table th {
         }
         else if(data.type='noSeats'){
           //alert("There arent enough seats");
+          window.location.reload();
         }
         else if(data.type='applicationAccepted'){
           window.location.reload();
@@ -377,7 +393,7 @@ Table th {
             <td>${trip.ora_partenza}</td>
             <td>${trip.contributo_economico}</td>
             <td>${trip.tempo_percorrenza}</td>
-            <td>${trip.posti_disponibili}</td>
+            <td>${trip.posti_disponibili - trip.posti_occupati}</td>
             <td>${trip.citta_partenza}</td>
             <td>${trip.citta_destinazione}</td>
             <td>${trip.applicazione_aperte}</td>
@@ -393,12 +409,12 @@ Table th {
     var applicationsTable = [];
     
     function displayApplications(applications) {
-        applicationsTable = document.getElementById('applicationsTable');
-        if (applicationsTable) {
-            applicationsTable.remove()
-        }
-        if(applications.length > 0){
-            const table = document.createElement('table');
+      var applicationsTable = document.getElementById('applicationsTable');
+      if (applicationsTable) {
+        applicationsTable.remove()
+      }
+      if(applications.length > 0){
+        const table = document.createElement('table');
         applicationsTable = document.getElementById('applicationsTable');
         table.id = 'applicationsTable';
         table.innerHTML = `
@@ -407,7 +423,8 @@ Table th {
         <th>Number of Passengers</th>
         <th>Options</th>
         `;
-        document.body.appendChild(table);
+        const applicationsContainer = document.getElementById('applications-container');
+        applicationsContainer.appendChild(table);
         
         applicationsTable = document.getElementById('applicationsTable');
         const newTbody = document.createElement('tbody');
@@ -417,14 +434,13 @@ Table th {
           <td>${application.nome} ${application.cognome}</td>
           <td>${application.email}</td>
           <td>${application.n_passeggeri}</td>
-          <td><button onclick="acceptApplication(${application.id}, ${application.id_viaggio})">Accept</button></td>
-          <td><button onclick="acceptApplication(${application.id}, ${application.id_viaggio}, false)">Deny</button></td>
+          <td><button onclick="acceptApplication(${application.id}, ${application.id_viaggio})">Accept</button>
+          <button onclick="acceptApplication(${application.id}, ${application.id_viaggio}, false)">Deny</button></td>
         `;
         newTbody.appendChild(row);
       });
         applicationsTable.appendChild(newTbody);
-        }
-        
+      }
     }
 
     async function getUserDetails(userId) {

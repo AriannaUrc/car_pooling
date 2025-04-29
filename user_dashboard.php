@@ -21,7 +21,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'utente') {
 
 
 <div class="header">
-    <h1><?php echo $_SESSION['username'];?>: USER.</h1>
+    <h1><?php echo $_SESSION['username'];?>: USER</h1>
     <form action="" method="post">
       <input type="submit" name="logout" value="Logout" class="logout-button">
     </form>

@@ -259,7 +259,7 @@ const handleGetApplications = (data, ws) => {
   console.log("applicants for " + tripId);
 
   const query = `
-    SELECT a.*, u.nome, u.cognome, u.email
+    SELECT a.*, u.nome, u.cognome, u.email, v.*
     FROM applicazioni a
     JOIN utenti u ON a.id_utente = u.id_utente
     JOIN viaggi v ON a.id_viaggio = v.id_viaggio
@@ -564,10 +564,10 @@ const handleAcceptApplication = (applicationId, tripId, accepted, ws) => {
           const trip = results2[0];
 
           if (accepted) {
-              if (trip.posti_disponibili - trip.posti_occupati < application.n_passeggeri) {
+              /* if (trip.posti_disponibili - trip.posti_occupati < application.n_passeggeri) {
                   ws.send(JSON.stringify({ status: 'failure', type: 'noSeats', message: 'Not enough seats available' }));
                   return;
-              }
+              } */
 
               // Update trip
               const query3 = 'UPDATE viaggi SET posti_occupati = posti_occupati +? WHERE id_viaggio =?';
