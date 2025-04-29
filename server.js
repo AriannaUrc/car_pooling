@@ -262,7 +262,10 @@ const handleGetApplications = (data, ws) => {
     SELECT a.*, u.nome, u.cognome, u.email
     FROM applicazioni a
     JOIN utenti u ON a.id_utente = u.id_utente
-    WHERE a.id_viaggio =? AND a.stato = 'in_attesa'
+    JOIN viaggi v ON a.id_viaggio = v.id_viaggio
+    WHERE a.id_viaggio =?
+    AND a.stato = 'in_attesa'
+    AND v.posti_disponibili - v.posti_occupati >= a.n_passeggeri;
   `;
 
   // Execute query to check user existence
