@@ -85,6 +85,19 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'autista') {
     position: relative;
     border-radius: 9px;
 }
+    
+.logout-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: #ff0000;
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 80px;
+}
 
 .row {
   display: flex;
