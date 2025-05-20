@@ -20,7 +20,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'autista') {
 
 <div class="container">
   <div class="header">
-  <h1><?php echo $_SESSION['username'];?>: DRIVER</h1>
+  <h1><?php echo $_SESSION['username'];?> (DRIVER)</h1>
     <form action="" method="post">
       <input type="submit" name="logout" value="Logout" class="logout-button">
     </form>
@@ -123,12 +123,22 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'autista') {
 
 .col-left {
   width: 45%;
-  margin-right: 20px;
+  margin-right: 2%;
+}
+.col-right {
+  width: 51%;
 }
 
-.col-right {
-  width: 45%;
+#review-form textarea {
+    width: 100%; /* or you can specify a fixed width like 300px */
+    height: 150px; /* You can adjust the height to fit your needs */
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+    resize: vertical; /* Allows the user to resize vertically if needed */
 }
+
 
 #tripForm {
   padding: 10px;
@@ -246,8 +256,14 @@ Table th {
 #search-results h2 {
   margin-top: 0;
 }
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
 
-@media only screen and (max-width: 768px) {
+
+@media only screen and (max-width: 1700px) {
  .container {
     margin: 20px auto;
   }
@@ -365,7 +381,18 @@ Table th {
         }
         const newTbody = document.createElement('tbody');
         const firstrow = document.createElement('tr');
-        firstrow.innerHTML = '<th>Date of Departure</th><th>Time of Departure</th><th>Economic Contribution</th><th>Travel Duration (minutes)</th><th>Available Seats</th><th>City of Departure</th><th>City of Destination</th><td>App. Aperte</td><th>Registrations</th>';
+        firstrow.innerHTML = `
+  <th>Date of Departure</th>
+  <th>Time of Departure</th>
+  <th>Economic Contribution</th>
+  <th>Travel Duration (minutes)</th>
+  <th>Available Seats</th>
+  <th>Departure</th>
+  <th>Destination</th>
+  <th>App. Aperte</th>
+  <th>Registrations</th>
+`;
+
         newTbody.appendChild(firstrow);
         if(trips.length <= 0 && offset > 0){
             const row = document.createElement('tr');

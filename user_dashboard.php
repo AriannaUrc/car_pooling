@@ -21,7 +21,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'utente') {
 
 
 <div class="header">
-    <h1><?php echo $_SESSION['username'];?>: USER</h1>
+    <h1><?php echo $_SESSION['username'];?> (USER)</h1>
     <form action="" method="post">
       <input type="submit" name="logout" value="Logout" class="logout-button">
     </form>
@@ -31,17 +31,17 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'utente') {
       <div class="search-form">
         <h2>Search for Trips</h2>
         <form method="get" action="">
-          <label for="data_partenza">Date of Departure:</label>
+          <label for="data_partenza">of DepartureDate :</label>
           <input type="date" id="data_partenza" name="data_partenza"><br>
           <label for="ora_partenza">Time of Departure:</label>
           <input type="time" id="ora_partenza" name="ora_partenza"><br>
           <label for="animali_allowed">Allow Animals:</label>
           <input type="checkbox" id="animali_allowed" name="animali_allowed"><br>
-          <label for="id_citta_partenza">City of Departure:</label>
+          <label for="id_citta_partenza">Departure:</label>
           <select id="id_citta_partenza" name="id_citta_partenza" required>
             <option value="">Select a city</option>
           </select><br>
-          <label for="id_citta_destinazione">City of Destination:</label>
+          <label for="id_citta_destinazione">Destination:</label>
           <select id="id_citta_destinazione" name="id_citta_destinazione" required>
             <option value="">Select a city</option>
           </select><br>
@@ -484,9 +484,10 @@ table th {
   margin-top: 0;
 }
 
-@media only screen and (max-width: 768px) {
+@media only screen and (max-width: 1100px) {
  .container {
     margin: 20px auto;
+    min-width: 1800px;
   }
  .row {
     flex-direction: column;
@@ -547,11 +548,18 @@ table th {
     function displayTrips(trips) {
     const tripsDiv = document.getElementById('trips');
     if (trips.length > 0) {
-        let html = '<table border="1"><tr><th>Driver ID</hr><th>Date of Departure</th><th>Time of Departure</th><th>Economic Contribution</th><th>Travel Duration (minutes)</th><th>Available Seats</th><th>City of Departure</th><th>City of Destination</th><th>Apply</th></tr>';
+        let html = '<table border="1"><tr><th>Driver ID</hr><th>Date</th><th>Time of Departure</th><th>Economic Contribution</th><th>Travel Duration (minutes)</th><th>Available Seats</th><th>Departure</th><th>Destination</th><th>Apply</th></tr>';
         trips.forEach(trip => {
+
+            const date = new Date(trip.data_partenza);
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            const datePart = `${year}-${month}-${day}`;
+
             html += `<tr>
                 <td>${trip.id_autista}</td>
-                <td>${trip.data_partenza}</td>
+                <td>${datePart}</td>
                 <td>${trip.ora_partenza}</td>
                 <td>${trip.contributo_economico}</td>
                 <td>${trip.tempo_percorrenza}</td>
@@ -588,7 +596,7 @@ table th {
         tripsDiv.innerHTML = '<p>No trips available.</p>';
     }
     else{
-        let html = '<table border="1"><tr><th>Driver ID</hr><th>Date of Departure</th><th>Time of Departure</th><th>Economic Contribution</th><th>Travel Duration (minutes)</th><th>Available Seats</th><th>City of Destination</th><th>Apply</th></tr>';
+        let html = '<table border="1"><tr><th>Driver ID</hr><th>Date</th><th>Time of Departure</th><th>Economic Contribution</th><th>Travel Duration (minutes)</th><th>Available Seats</th><th>Departure</th><th>Destination</th><th>Apply</th></tr>';
         html += `</table> No more trips to show... <br><button id="prev" >Previous</button> 
         <button id="next" disabled>Next</button>`;
 
